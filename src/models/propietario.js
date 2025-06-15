@@ -1,4 +1,3 @@
-// src/models/propietario.model.js
 const definePropietario = (sequelize, DataTypes) => {
     const Propietario = sequelize.define('Propietario', {
         id: {
