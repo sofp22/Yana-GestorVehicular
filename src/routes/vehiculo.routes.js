@@ -6,8 +6,8 @@ import { verifyToken } from '../middleware/authJwt.js';
 const router = Router();
 
 // Rutas de Vehiculo - Protegidas por JWT
-router.get('/getVehiculos', verifyToken, vehiculoController.getAllVehiculos);
-router.post('/registrarVehiculo', verifyToken, vehiculoController.createVehiculo);
+router.get('/', verifyToken, vehiculoController.getAllVehiculos);
+router.post('/', verifyToken, vehiculoController.createVehiculo);
 
 // Ahora las operaciones GET, PUT, DELETE para un solo vehículo usan la placa
 router.get('/:placa', verifyToken, vehiculoController.getVehiculoByPlaca);
