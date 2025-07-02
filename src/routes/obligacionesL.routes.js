@@ -1,4 +1,4 @@
-// src/routes/obligacionesL.routes.js
+
 import { Router } from 'express';
 import obligacionesLController from '../controllers/obligacionesLController.js';
 import { verifyToken } from '../middleware/authJwt.js';
@@ -10,6 +10,6 @@ router.get('/vehiculo/:vehiculoId', verifyToken, obligacionesLController.getAllO
 router.get('/:id', verifyToken, obligacionesLController.getObligacionesLById);
 router.post('/', verifyToken, obligacionesLController.createObligacionesL);
 router.put('/:id', verifyToken, obligacionesLController.updateObligacionesL);
-router.delete('/:id', verifyToken, obligacionesLController.deleteObligacionesL);
+
 
 export default router;

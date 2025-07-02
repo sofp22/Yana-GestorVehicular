@@ -1,4 +1,6 @@
-const definePropietario = (sequelize, DataTypes) => {
+import { DataTypes } from 'sequelize';
+
+const definePropietario = (sequelize) => {
     const Propietario = sequelize.define('Propietario', {
         id: {
             type: DataTypes.UUID,

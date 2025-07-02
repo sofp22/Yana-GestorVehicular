@@ -1,11 +1,12 @@
-// src/services/mantenimiento.service.js
+
 import db from '../models/index.js';
 import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
-const Mantenimiento = db.Mantenimiento;
-const Vehiculo = db.Vehiculo;
+const Mantenimiento = db.models.Mantenimiento;
+const Vehiculo = db.models.Vehiculo;
+
 const UPLOADS_DIR = 'src/uploads/mantenimientos';
 
 class MantenimientoService {
@@ -84,7 +85,7 @@ class MantenimientoService {
 
             mantenimientoData.facturaPath = newFacturaPath;
         } else if (mantenimientoData.facturaPath === null) { // Si se envía 'facturaPath: null' explícitamente para borrarlo
-             mantenimientoData.facturaPath = null;
+            mantenimientoData.facturaPath = null;
         }
 
         try {

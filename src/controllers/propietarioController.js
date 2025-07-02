@@ -1,4 +1,4 @@
-// src/controllers/propietario.controller.js
+
 import propietarioService from '../services/propietario.service.js';
 import { handleHttpError } from '../middleware/errorHandler.js';
 
@@ -38,7 +38,6 @@ class PropietarioController {
         }
     }
 
-    // CAMBIO: Usa identificacion de req.params para todas las operaciones con un solo propietario
     async getPropietarioByIdentificacion(req, res) {
         try {
             const identificacion = req.params.identificacion;

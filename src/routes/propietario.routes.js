@@ -1,4 +1,4 @@
-// src/routes/propietario.routes.js
+
 import { Router } from 'express';
 import propietarioController from '../controllers/propietarioController.js';
 import { verifyToken } from '../middleware/authJwt.js';

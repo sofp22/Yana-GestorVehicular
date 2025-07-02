@@ -1,7 +1,6 @@
-// src/controllers/obligacionesL.controller.js
 import obligacionesLService from '../services/obligacionesL.service.js';
 import { handleHttpError } from '../middleware/errorHandler.js';
-import { uploadObligacionesL } from '../middleware/upload.js'; // Importa el middleware de Multer
+import { uploadObligacionesL } from '../middleware/upload.js'; 
 
 class ObligacionesLController {
     async getAllObligacionesL(req, res) {
@@ -51,14 +50,6 @@ class ObligacionesLController {
         });
     }
 
-    async deleteObligacionesL(req, res) {
-        try {
-            const result = await obligacionesLService.deleteObligacionesL(req.params.id, req.user.id);
-            res.status(200).json(result);
-        } catch (error) {
-            handleHttpError(res, error, 'Error al eliminar obligación legal.');
-        }
-    }
 }
 
 export default new ObligacionesLController();

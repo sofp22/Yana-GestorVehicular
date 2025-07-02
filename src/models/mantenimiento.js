@@ -1,5 +1,6 @@
-// src/models/mantenimiento.model.js
-const defineMantenimiento = (sequelize, DataTypes) => {
+import { DataTypes } from 'sequelize';
+
+export default (sequelize) => {
     const Mantenimiento = sequelize.define('Mantenimiento', {
         id: {
             type: DataTypes.UUID,
@@ -12,7 +13,11 @@ const defineMantenimiento = (sequelize, DataTypes) => {
             allowNull: false
         },
         fecha: {
-            type: DataTypes.DATEONLY,
+            type: DataTypes.DATE,
+            allowNull: false
+        },
+        fechaVencimiento: {
+            type: DataTypes.DATE,
             allowNull: false
         },
         kilometraje: {
@@ -24,26 +29,29 @@ const defineMantenimiento = (sequelize, DataTypes) => {
             allowNull: true
         },
         costo: {
-            type: DataTypes.DECIMAL(10, 2), // 10 dígitos en total, 2 después del punto decimal
+            type: DataTypes.DECIMAL(10, 2),
+            allowNull: false
+        },
+        facturaPath: { // Ruta del archivo subido
+            type: DataTypes.STRING,
             allowNull: true
         },
-        facturaPath: { // Ruta del archivo en el servidor local
-            type: DataTypes.STRING,
-            allowNull: true // Puede que no todos los mantenimientos tengan factura
-        },
-        vehiculoId: {
+        vehiculoId: { // Clave Foránea a Vehiculo
             type: DataTypes.UUID,
             allowNull: false,
             references: {
-                model: 'vehiculos', // Nombre de la tabla de Vehiculos
+                model: 'vehiculos', // Nombre de la tabla a la que hace referencia
+                key: 'id'
+            }
+        },
+        tallerMecanicoId: { // Nueva Clave Foránea a TallerMecanico (opcional si es un propietario quien registra)
+            type: DataTypes.UUID,
+            allowNull: true, // Puede ser nulo si el registro lo hace el propietario directamente
+            references: {
+                model: 'TallerMecanicos', // Nombre de la tabla a la que hace referencia
                 key: 'id'
             }
         }
-    }, {
-        tableName: 'mantenimientos',
-        timestamps: true
     });
     return Mantenimiento;
 };
-
-export default defineMantenimiento;

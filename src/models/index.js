@@ -1,55 +1,94 @@
-// src/models/index.js
-import { Sequelize, DataTypes } from 'sequelize';
-import sequelize from '../config/db.config.js';
+import { Sequelize } from 'sequelize';
+//import config from '../config/db.config.js';
 
-// Importar definiciones de modelos
-import definePropietario from './propietario.js';
-import defineVehiculo from './vehiculo.js';
-import defineMantenimiento from './mantenimiento.js';
-import defineObligacionesL from './obligacionesL.js';
+import dotenv from 'dotenv';
+dotenv.config();
+
+import PropietarioModel from './propietario.js';
+import VehiculoModel from './vehiculo.js';
+import MantenimientoModel from './mantenimiento.js';
+import ObligacionesLModel from './obligacionesL.js';
+import TallerMecanicoModel from './tallerMecanico.js'; 
+
+const DATABASE_URL = process.env.DATABASE_URL;
+
+// Añade un log aquí para verificar que la URL es una string antes de pasarla a Sequelize
+console.log('DEBUG: DATABASE_URL en models/index.js:', DATABASE_URL);
+
+if (!DATABASE_URL) {
+  // Lanza un error más descriptivo si la URL sigue siendo undefined
+  throw new Error("DATABASE_URL no está definida. Asegúrate de que tu archivo .env esté configurado y dotenv.config() se ejecute temprano en server.js.");
+}
+
+const sequelize = new Sequelize(DATABASE_URL, { // <-- Usa la variable directamente
+  dialect: 'postgres',
+  protocol: 'postgres',
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false
+    }
+  },
+
+
+  logging: false // Deshabilita los logs de Sequelize si no los necesitas
+});
 
 const db = {};
-db.sequelize = sequelize;
+
 db.Sequelize = Sequelize;
+db.sequelize = sequelize;
 
-// Inicializar modelos
-db.Propietario = definePropietario(sequelize, DataTypes);
-db.Vehiculo = defineVehiculo(sequelize, DataTypes);
-db.Mantenimiento = defineMantenimiento(sequelize, DataTypes);
-db.ObligacionesL = defineObligacionesL(sequelize, DataTypes);
+// Inicializa los modelos
+db.models = {
+  Propietario: PropietarioModel(sequelize),
+  Vehiculo: VehiculoModel(sequelize),
+  Mantenimiento: MantenimientoModel(sequelize),
+  ObligacionesL: ObligacionesLModel(sequelize),
+  TallerMecanico: TallerMecanicoModel(sequelize) 
+};
 
-// Definir Relaciones
-// Propietario (1) <---> (N) Vehiculo
-db.Propietario.hasMany(db.Vehiculo, {
-    foreignKey: 'propietarioId',
-    as: 'vehiculos',
-    onDelete: 'CASCADE'
-});
-db.Vehiculo.belongsTo(db.Propietario, {
-    foreignKey: 'propietarioId',
-    as: 'propietario'
-});
+// Define las asociaciones
 
-// Vehiculo (1) <---> (N) Mantenimiento
-db.Vehiculo.hasMany(db.Mantenimiento, {
-    foreignKey: 'vehiculoId',
-    as: 'mantenimientos',
-    onDelete: 'CASCADE'
+// Propietario - Vehiculo (Un propietario tiene muchos vehículos)
+db.models.Propietario.hasMany(db.models.Vehiculo, {
+  foreignKey: 'propietarioId',
+  as: 'vehiculos'
 });
-db.Mantenimiento.belongsTo(db.Vehiculo, {
-    foreignKey: 'vehiculoId',
-    as: 'vehiculo'
+db.models.Vehiculo.belongsTo(db.models.Propietario, {
+  foreignKey: 'propietarioId',
+  as: 'propietario'
 });
 
-// Vehiculo (1) <---> (N) ObligacionesL
-db.Vehiculo.hasMany(db.ObligacionesL, {
-    foreignKey: 'vehiculoId',
-    as: 'obligacionesL',
-    onDelete: 'CASCADE'
+// Vehiculo - Mantenimiento (Un vehículo tiene muchos mantenimientos)
+db.models.Vehiculo.hasMany(db.models.Mantenimiento, {
+  foreignKey: 'vehiculoId',
+  as: 'mantenimientos'
 });
-db.ObligacionesL.belongsTo(db.Vehiculo, {
-    foreignKey: 'vehiculoId',
-    as: 'vehiculo'
+db.models.Mantenimiento.belongsTo(db.models.Vehiculo, {
+  foreignKey: 'vehiculoId',
+  as: 'vehiculo'
 });
+
+// Vehiculo - ObligacionesL (Un vehículo tiene muchas obligaciones legales)
+db.models.Vehiculo.hasMany(db.models.ObligacionesL, {
+  foreignKey: 'vehiculoId',
+  as: 'obligacionesLegales'
+});
+db.models.ObligacionesL.belongsTo(db.models.Vehiculo, {
+  foreignKey: 'vehiculoId',
+  as: 'vehiculo'
+});
+
+// NUEVA ASOCIACIÓN: TallerMecanico - Mantenimiento (Un taller puede realizar muchos mantenimientos)
+db.models.TallerMecanico.hasMany(db.models.Mantenimiento, {
+  foreignKey: 'tallerMecanicoId',
+  as: 'mantenimientosRealizados'
+});
+db.models.Mantenimiento.belongsTo(db.models.TallerMecanico, {
+  foreignKey: 'tallerMecanicoId',
+  as: 'tallerMecanico'
+});
+
 
 export default db;

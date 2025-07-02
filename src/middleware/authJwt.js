@@ -1,7 +1,6 @@
-// src/middleware/authJwt.js
 import jwt from 'jsonwebtoken';
 import dotenv from 'dotenv';
-import db from '../models/index.js'; // Para buscar al usuario si es necesario
+import db from '../models/index.js'; 
 
 dotenv.config();
 

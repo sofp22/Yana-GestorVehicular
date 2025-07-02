@@ -3,9 +3,10 @@ import db from '../models/index.js';
 import fs from 'fs/promises';
 import path from 'path';
 
-const Vehiculo = db.Vehiculo;
-const Mantenimiento = db.Mantenimiento;
-const ObligacionesL = db.ObligacionesL;
+const Vehiculo = db.models.Vehiculo;
+const Mantenimiento = db.models.Mantenimiento;
+const ObligacionesL = db.models.ObligacionesL;
+
 
 class VehiculoService {
     async getAllVehiculos(propietarioId) {

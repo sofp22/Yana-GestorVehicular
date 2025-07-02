@@ -1,4 +1,4 @@
-// src/middleware/errorHandler.js
+
 export const handleHttpError = (res, error, defaultMessage = 'Error interno del servidor.') => {
     console.error(`Error HTTP: ${error.message || defaultMessage}`, error);
 

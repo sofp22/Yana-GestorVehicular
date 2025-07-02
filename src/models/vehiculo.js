@@ -1,5 +1,6 @@
-// src/models/vehiculo.model.js
-const defineVehiculo = (sequelize, DataTypes) => {
+import { DataTypes } from 'sequelize';
+
+const defineVehiculo = (sequelize) => {
     const Vehiculo = sequelize.define('Vehiculo', {
         id: {
             type: DataTypes.UUID,

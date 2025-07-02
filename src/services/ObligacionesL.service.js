@@ -4,8 +4,8 @@ import path from 'path';
 import fs from 'fs/promises';
 import { v4 as uuidv4 } from 'uuid';
 
-const ObligacionesL = db.ObligacionesL;
-const Vehiculo = db.Vehiculo;
+const ObligacionesL = db.models.ObligacionesL;
+const Vehiculo = db.models.Vehiculo;
 const UPLOADS_DIR = 'src/uploads/obligaciones_l';
 
 class ObligacionesLService {

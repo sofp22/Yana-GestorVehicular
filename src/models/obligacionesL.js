@@ -1,5 +1,6 @@
-// src/models/obligacionesL.model.js
-const defineObligacionesL = (sequelize, DataTypes) => {
+import { DataTypes } from 'sequelize';
+
+export default (sequelize) => {
     const ObligacionesL = sequelize.define('ObligacionesL', {
         id: {
             type: DataTypes.UUID,
@@ -15,31 +16,26 @@ const defineObligacionesL = (sequelize, DataTypes) => {
             type: DataTypes.STRING,
             allowNull: false
         },
-        fechaEmision: {
-            type: DataTypes.DATEONLY,
+        descripcion: {
+            type: DataTypes.TEXT,
             allowNull: true
         },
-        fechaRenovacion: {
-            type: DataTypes.DATEONLY,
+        fechaVencimiento: { // Asegúrate de tener este campo para la vigencia
+            type: DataTypes.DATEONLY, 
             allowNull: true
         },
-        archivoPath: { // Ruta del archivo en el servidor local
+        documentoPath: { // Ruta del archivo subido
             type: DataTypes.STRING,
-            allowNull: false
+            allowNull: true
         },
-        vehiculoId: {
+        vehiculoId: { // Clave Foránea
             type: DataTypes.UUID,
             allowNull: false,
             references: {
-                model: 'vehiculos', // Nombre de la tabla de Vehiculos
+                model: 'vehiculos',
                 key: 'id'
             }
         }
-    }, {
-        tableName: 'obligaciones_l', // Nombre de la tabla en PostgreSQL
-        timestamps: true
     });
     return ObligacionesL;
 };
-
-export default defineObligacionesL;

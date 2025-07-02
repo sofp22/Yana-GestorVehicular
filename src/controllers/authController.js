@@ -1,4 +1,4 @@
-// src/controllers/authController.js
+
 import propietarioService from '../services/propietario.service.js';
 import authService from '../services/auth.service.js';
 import { handleHttpError } from '../middleware/errorHandler.js';
@@ -6,6 +6,7 @@ import { handleHttpError } from '../middleware/errorHandler.js';
 class AuthController {
     async register(req, res) {
         try {
+            console.log('BODY RECIBIDO:', req.body);
             const newPropietario = await propietarioService.registerPropietario(req.body);
             res.status(201).json({ message: 'Propietario registrado exitosamente.', propietario: newPropietario });
         } catch (error) {

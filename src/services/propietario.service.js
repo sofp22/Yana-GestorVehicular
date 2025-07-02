@@ -1,17 +1,17 @@
-// src/services/propietario.service.js
 import db from '../models/index.js';
 import bcrypt from 'bcryptjs';
 import authService from './auth.service.js'; // Importa authService para generateAccessToken
 
-const Propietario = db.Propietario;
-const Vehiculo = db.Vehiculo;
-const Mantenimiento = db.Mantenimiento;
-const ObligacionesL = db.ObligacionesL;
+const Propietario = db.models.Propietario;
+const Vehiculo = db.models.Vehiculo;
+const Mantenimiento = db.models.Mantenimiento;
+const ObligacionesL = db.models.ObligacionesL;
+
 import fs from 'fs/promises';
 import path from 'path';
 
 const UPLOADS_MANTENIMIENTOS_DIR = 'src/uploads/mantenimientos';
-const UPLOADS_OBLIGACIONES_L_DIR = 'src/uploads/obligaciones_l';
+const UPLOADS_OBLIGACIONES_L_DIR = 'src/uploads/obligacionesL';
 
 class PropietarioService {
     async registerPropietario(propietarioData) {

@@ -1,4 +1,3 @@
-// src/middleware/upload.js
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs'; // Usamos fs síncrono para mkdirSync
@@ -7,7 +6,7 @@ const UPLOADS_BASE_DIR = 'src/uploads';
 const MANTENIMIENTOS_DIR = path.join(UPLOADS_BASE_DIR, 'mantenimientos');
 const OBLIGACIONES_L_DIR = path.join(UPLOADS_BASE_DIR, 'obligaciones_l');
 
-// Crear directorios si no existen
+
 fs.mkdirSync(MANTENIMIENTOS_DIR, { recursive: true });
 fs.mkdirSync(OBLIGACIONES_L_DIR, { recursive: true });
 
