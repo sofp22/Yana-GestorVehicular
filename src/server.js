@@ -18,5 +18,5 @@ db.sequelize.sync({ alter: true })
         });
     })
     .catch(err => {
-        console.error("Error al sincronizar la base de datos:", err);
+        console.error("Error al sincronizar la base de datos!:", err);
     });
