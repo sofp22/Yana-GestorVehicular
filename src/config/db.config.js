@@ -24,7 +24,7 @@ const sequelize = new Sequelize(process.env.DATABASE_URL, {
 });
 
 if (sequelize){
-    console.log('mondaesa funciona')
+    console.log(' funciona')
 }
 
 export default sequelize;

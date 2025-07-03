@@ -1,4 +1,4 @@
-import obligacionesLService from '../services/obligacionesL.service.js';
+import obligacionesLService from '../services/ObligacionesL.service.js';
 import { handleHttpError } from '../middleware/errorHandler.js';
 import { uploadObligacionesL } from '../middleware/upload.js'; 
 
