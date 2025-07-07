@@ -1,6 +1,6 @@
 import { google } from 'googleapis';
 import dotenv from 'dotenv';
-import path from 'path'; // Import path module
+import path from 'path'; 
 import fs from 'fs';   // Import file system module
 import { fileURLToPath } from 'url'; // For __dirname in ES Modules
 
@@ -9,14 +9,12 @@ dotenv.config();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// --- Credenciales de la cuenta de servicio de Google (Intento 1: Desde .env) ---
+
 const GOOGLE_CALENDAR_CLIENT_EMAIL_ENV = process.env.GOOGLE_CALENDAR_CLIENT_EMAIL;
 const rawPrivateKeyEnv = process.env.GOOGLE_CALENDAR_PRIVATE_KEY;
 let GOOGLE_CALENDAR_PRIVATE_KEY_ENV = null;
 
 if (rawPrivateKeyEnv) {
-    // Trim any whitespace from the start/end of the entire string
-    // Replace ALL carriage returns (\r) with nothing, then replace escaped newlines (\\n) with actual newlines (\n)
     GOOGLE_CALENDAR_PRIVATE_KEY_ENV = rawPrivateKeyEnv.trim().replace(/\r/g, '').replace(/\\n/g, '\n');
 }
 
@@ -46,12 +44,9 @@ if (GOOGLE_CALENDAR_PRIVATE_KEY_ENV) {
         console.error('ERROR DE FORMATO (ENV): GOOGLE_CALENDAR_PRIVATE_KEY no contiene los marcadores PEM completos. Revisa tu .env.');
     }
 }
-// --- FIN NUEVAS COMPROBACIONES ---
-
 
 let authClient;
 
-// --- Intento 2: Cargar credenciales desde un archivo JSON (SOLO PARA DEPURACIÓN LOCAL) ---
 const KEY_FILE_PATH = path.join(__dirname, '../config/google-credentials.json');
 
 console.log('DEBUG: Intentando cargar credenciales desde archivo:', KEY_FILE_PATH);
@@ -87,16 +82,7 @@ if (fs.existsSync(KEY_FILE_PATH)) {
 // Instancia del cliente de Google Calendar API
 const calendar = google.calendar({ version: 'v3', auth: authClient });
 
-/**
- * Crea un evento en el calendario de Google.
- * Este evento servirá como recordatorio para el usuario.
- * @param {string} summary - Título del evento (ej. "Recordatorio SOAT - Placa ABC123").
- * @param {string} description - Descripción detallada del evento.
- * @param {Date} eventStartDateTime - Objeto Date para la fecha y hora de inicio del evento en el calendario.
- * @param {Date} eventEndDateTime - Objeto Date para la fecha y hora de fin del evento en el calendario.
- * @param {Array<number>} reminderMinutesArray - Array de minutos antes del evento para las alarmas (ej. [0, 60*24] para el mismo día y un día antes).
- * @returns {Promise<object|null>} El evento creado o null si hay un error.
- */
+
 export const createCalendarEvent = async (summary, description, eventStartDateTime, eventEndDateTime, reminderMinutesArray) => {
     const calendarId = process.env.GOOGLE_CALENDAR_ID;
     if (!calendarId) {
@@ -115,15 +101,15 @@ export const createCalendarEvent = async (summary, description, eventStartDateTi
         description: description,
         start: {
             dateTime: eventStartDateTime.toISOString(),
-            timeZone: 'America/Bogota', // Asegúrate de usar la zona horaria correcta
+            timeZone: 'America/Bogota', 
         },
         end: {
             dateTime: eventEndDateTime.toISOString(),
             timeZone: 'America/Bogota',
         },
         reminders: {
-            useDefault: false, // No usar los recordatorios por defecto del calendario
-            overrides: overrides, // Usar los recordatorios definidos
+            useDefault: false, 
+            overrides: overrides, 
         },
     };
 
