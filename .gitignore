@@ -1,4 +1,4 @@
 node_modules/
 .env
 src/uploads/
-/config/google-credentials.json
+/config/google-credentials.json"src/config/google-credentials.json" 
