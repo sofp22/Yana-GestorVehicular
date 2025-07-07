@@ -1,46 +1,49 @@
 import db from '../models/index.js';
-import cron from 'node-cron'; // Para los reportes automáticos
-import { Op } from 'sequelize'; // Para operadores de Sequelize en filtros
+import cron from 'node-cron';
+import { Op } from 'sequelize';
+import { createCalendarEvent } from '../services/googleCalendarService.js'; // Importa el servicio de Google Calendar
 
-// --- Lógica de Reporte Automático ---
+// --- Lógica de Reporte Automático (código existente) ---
 
 const generarContenidoReporteAutomatico = async () => {
     try {
-        // Incluye las asociaciones para obtener todos los datos necesarios en una sola consulta
         const vehiculosConTodo = await db.models.Vehiculo.findAll({
             include: [
                 {
                     model: db.models.Propietario,
-                    attributes: ['nombre', 'identificacion'] 
+                    as: 'propietario',
+                    attributes: ['nombre', 'identificacion']
                 },
                 {
                     model: db.models.Mantenimiento,
-                    attributes: ['tipo', 'costo', 'fecha'] 
+                    as: 'mantenimientos',
+                    attributes: ['tipo', 'costo', 'fecha', 'fechaProximoMantenimiento']
                 },
                 {
                     model: db.models.ObligacionesL,
-                    attributes: ['nombre', 'fechaVencimiento'] 
+                    as: 'obligacionesLegales',
+                    attributes: ['nombre', 'fechaVencimiento']
                 }
             ],
-            attributes: ['marca', 'placa', 'modelo', 'color'] 
+            attributes: ['marca', 'placa', 'modelo', 'color']
         });
 
-        // Formatear la información para el reporte
         const reporteData = vehiculosConTodo.map(vehiculo => {
-            const propietario = vehiculo.Propietario ? {
-                nombre: vehiculo.Propietario.nombre,
-                cedula: vehiculo.Propietario.identificacion
+            const propietario = vehiculo.propietario ? {
+                nombre: vehiculo.propietario.nombre,
+                cedula: vehiculo.propietario.identificacion
             } : null;
 
-            const mantenimientos = vehiculo.Mantenimientos.map(m => ({
+            const mantenimientos = vehiculo.mantenimientos.map(m => ({
                 tipo: m.tipo,
                 precio: m.costo,
-                fecha: m.fecha.toISOString().split('T')[0] // Formato YYYY-MM-DD
+                fecha: m.fecha.toISOString().split('T')[0],
+                fechaProximoMantenimiento: m.fechaProximoMantenimiento ? m.fechaProximoMantenimiento.toISOString().split('T')[0] : null
             }));
 
-            const obligaciones = vehiculo.ObligacionesLs.map(o => ({
+            const obligaciones = vehiculo.obligacionesLegales.map(o => ({
                 nombreDocumento: o.nombre,
-                vigente: o.fechaVencimiento ? new Date(o.fechaVencimiento) >= new Date() : 'N/A' // Valida vigencia
+                vigente: o.fechaVencimiento ? new Date(o.fechaVencimiento) >= new Date() : 'N/A'
             }));
 
             return {
@@ -67,10 +70,6 @@ const generarContenidoReporteAutomatico = async () => {
     }
 };
 
-// --- Endpoint para Reporte Automático (suele ser interno o activado por un cron job externo) ---
-// Aunque el usuario pidió un GET /automaticos, en un entorno real, la generación automática
-// no se activa por una llamada HTTP GET, sino por un scheduler.
-// Dejo el endpoint para la demostración si se quiere activar manualmente.
 export const getReporteAutomatico = async (req, res) => {
     try {
         const reporte = await generarContenidoReporteAutomatico();
@@ -87,44 +86,105 @@ export const getReporteAutomatico = async (req, res) => {
     }
 };
 
-// --- Programación del Reporte Automático (usando node-cron) ---
-// Por ejemplo: cada día a la 1:00 AM
-cron.schedule('0 1 * * *', async () => {
+// Programación del Reporte Automático
+cron.schedule('0 1 * * *', async () => { // Cada día a la 1:00 AM (America/Bogota)
     console.log('Iniciando generación de reporte automático programado...');
     try {
         const reporte = await generarContenidoReporteAutomatico();
-        // Aquí puedes añadir lógica para guardar el reporte en un archivo,
-        // enviarlo por email, subirlo a un servicio de almacenamiento, etc.
         console.log('Reporte automático programado generado y procesado.');
-        // Puedes loguear el reporte o su destino para depuración
-        // console.log(JSON.stringify(reporte, null, 2));
     } catch (error) {
         console.error('Error durante la generación programada del reporte automático:', error);
     }
 }, {
     scheduled: true,
-    timezone: "America/Bogota" 
+    timezone: "America/Bogota"
 });
-console.log('Tarea de generación de reporte automático programada para ejecutarse diariamente');
+console.log('Tarea de generación de reporte automático programada para ejecutarse diariamente a la 1:00 AM.');
 
-// --- Lógica de Reporte Manual con Filtros ---
-export const generarReporteManual = async (req, res) => {
+
+// --- Lógica de Recordatorios de Obligaciones Legales por Google Calendar ---
+
+const checkAndSendObligationReminders = async () => {
+    console.log('Iniciando verificación de recordatorios de obligaciones legales...');
+    const now = new Date();
+    now.setHours(0, 0, 0, 0);
+
+    // Ahora busca todas las obligaciones cuya fecha de vencimiento sea hoy o en el futuro.
     try {
-        // El ID del propietario se obtiene del token JWT, ya que la ruta estará protegida
+        const obligationsToRemind = await db.models.ObligacionesL.findAll({
+            where: {
+                fechaVencimiento: {
+                    [Op.gte]: now // Mayor o igual que hoy (incluye futuras)
+                }
+            },
+            include: [{
+                model: db.models.Vehiculo,
+                as: 'vehiculo',
+                include: [{ model: db.models.Propietario, as: 'propietario', attributes: ['id', 'nombre'] }]
+            }]
+        });
+
+        for (const obligation of obligationsToRemind) {
+            // La condición para crear el evento es que la fecha de vencimiento sea hoy o en el futuro
+            const fechaVencimiento = new Date(obligation.fechaVencimiento);
+            fechaVencimiento.setHours(0, 0, 0, 0); // Normalizar a medianoche para comparación
+
+            if (fechaVencimiento >= now) { // Solo si la fecha es hoy o en el futuro
+                if (obligation.vehiculo && obligation.vehiculo.propietario && obligation.vehiculo.propietario.id) {
+                    const summary = `Alarma Obligación: ${obligation.nombre} - ${obligation.vehiculo.placa}`;
+                    const description = `¡Alarma! La obligación legal "${obligation.nombre}" para el vehículo ${obligation.vehiculo.placa} vence el ${obligation.fechaVencimiento.toISOString().split('T')[0]}. ¡No olvides renovarla!`;
+
+                    // El evento se crea en la fecha de vencimiento
+                    const eventStart = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth(), fechaVencimiento.getDate(), 9, 0, 0); // Evento a las 9 AM
+                    const eventEnd = new Date(fechaVencimiento.getFullYear(), fechaVencimiento.getMonth(), fechaVencimiento.getDate(), 10, 0, 0); // Termina a las 10 AM
+
+                    // Recordatorios:
+                    // 0 minutos: alarma en el momento del evento (9 AM del día de vencimiento)
+                    // 60 * 24 minutos: alarma 24 horas antes del evento (9 AM del día anterior al vencimiento)
+                    const reminderMinutes = [0, 60 * 24]; // [mismo día, un día antes]
+
+                    await createCalendarEvent(
+                        summary,
+                        description,
+                        eventStart,
+                        eventEnd,
+                        reminderMinutes
+                    );
+                    console.log(`Evento de Google Calendar creado para recordatorio de obligación: ${summary}`);
+                }
+            } else {
+                console.log(`DEBUG: No se creó evento de calendario para obligación ${obligation.id}. Fecha ${obligation.fechaVencimiento} es anterior a hoy.`);
+            }
+        }
+        console.log('Verificación de recordatorios de obligaciones legales completada.');
+
+    } catch (error) {
+        console.error("Error al verificar y enviar recordatorios de obligaciones legales:", error);
+    }
+};
+
+// Programar la ejecución de los recordatorios (ejemplo: cada día a las 2:00 AM - después del reporte automático)
+cron.schedule('0 2 * * *', checkAndSendObligationReminders, {
+    scheduled: true,
+    timezone: "America/Bogota"
+});
+console.log('Tarea de recordatorios de obligaciones legales programada para ejecutarse diariamente a las 2:00 AM.');
+
+
+// --- Lógica de Reporte Manual con Filtros (código actualizado) ---
+export const generarReporteManual = async (req, res) => { // Eliminado 'const' duplicado
+    try {
         const propietarioId = req.user.id;
 
-        // Parámetros de filtro desde la query string (ej. /reportes/manuales?mantenimientoTipo=...)
         const {
             mantenimientoTipo,
             mantenimientoFechaInicio,
             mantenimientoFechaFin,
-            obligacionVigente, // 'true' o 'false'
+            obligacionVigente,
             vehiculoPlaca,
-            vehiculoMarca,
-            propietarioNombre // Aunque el reporte es para el propietario logueado, se puede mantener para consistencia si se extendiera
+            vehiculoMarca
         } = req.query;
 
-        // Construir condiciones de consulta dinámicamente
         const vehiculoWhere = { propietarioId };
         if (vehiculoPlaca) vehiculoWhere.placa = { [Op.iLike]: `%${vehiculoPlaca}%` };
         if (vehiculoMarca) vehiculoWhere.marca = { [Op.iLike]: `%${vehiculoMarca}%` };
@@ -144,6 +204,7 @@ export const generarReporteManual = async (req, res) => {
         const obligacionWhere = {};
         if (obligacionVigente !== undefined) {
             const now = new Date();
+            now.setHours(0, 0, 0, 0);
             if (obligacionVigente === 'true') {
                 obligacionWhere.fechaVencimiento = { [Op.gte]: now };
             } else if (obligacionVigente === 'false') {
@@ -151,44 +212,43 @@ export const generarReporteManual = async (req, res) => {
             }
         }
 
-
-        // Consulta los vehículos del propietario logueado con sus asociaciones y filtros
         const vehiculosFiltrados = await db.models.Vehiculo.findAll({
             where: vehiculoWhere,
             include: [
                 {
                     model: db.models.Propietario,
-                    attributes: ['nombre', 'identificacion'],
-                    // Si se permitiera filtrar por nombre de propietario, aquí iría la condición
-                    // where: propietarioNombre ? { nombre: { [Op.iLike]: `%${propietarioNombre}%` } } : {}
+                    as: 'propietario',
+                    attributes: ['nombre', 'identificacion']
                 },
                 {
                     model: db.models.Mantenimiento,
-                    where: mantenimientoWhere,
-                    attributes: ['tipo', 'costo', 'fecha']
+                    as: 'mantenimientos',
+                    where: Object.keys(mantenimientoWhere).length > 0 ? mantenimientoWhere : undefined,
+                    attributes: ['tipo', 'costo', 'fecha', 'fechaProximoMantenimiento']
                 },
                 {
                     model: db.models.ObligacionesL,
-                    where: obligacionWhere,
+                    as: 'obligacionesLegales',
+                    where: Object.keys(obligacionWhere).length > 0 ? obligacionWhere : undefined,
                     attributes: ['nombre', 'fechaVencimiento']
                 }
             ]
         });
 
-        // Formatear la información del reporte manual
         const reporteData = vehiculosFiltrados.map(vehiculo => {
-            const propietario = vehiculo.Propietario ? {
-                nombre: vehiculo.Propietario.nombre,
-                cedula: vehiculo.Propietario.identificacion
+            const propietario = vehiculo.propietario ? {
+                nombre: vehiculo.propietario.nombre,
+                cedula: vehiculo.propietario.identificacion
             } : null;
 
-            const mantenimientos = vehiculo.Mantenimientos.map(m => ({
+            const mantenimientos = vehiculo.mantenimientos.map(m => ({
                 tipo: m.tipo,
                 precio: m.costo,
-                fecha: m.fecha.toISOString().split('T')[0]
+                fecha: m.fecha.toISOString().split('T')[0],
+                fechaProximoMantenimiento: m.fechaProximoMantenimiento ? m.fechaProximoMantenimiento.toISOString().split('T')[0] : null
             }));
 
-            const obligaciones = vehiculo.ObligacionesLs.map(o => ({
+            const obligaciones = vehiculo.obligacionesLegales.map(o => ({
                 nombreDocumento: o.nombre,
                 vigente: o.fechaVencimiento ? new Date(o.fechaVencimiento) >= new Date() : 'N/A'
             }));
