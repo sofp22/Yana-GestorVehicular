@@ -56,3 +56,33 @@ export const generateMaintenanceQr = async (req, res) => {
         res.status(500).json({ message: "Error interno del servidor." });
     }
 };
+
+/**
+ * Función interna para validar un token de QR.
+ * @param {string} token - El token a validar.
+ * @returns {object|null} - Objeto con vehiculoId si es válido, null si no.
+ */
+export const validateQrToken = (token) => {
+    const tokenInfo = temporaryQrTokens.get(token);
+
+    if (!tokenInfo) {
+        return null; 
+    }
+
+    if (new Date() > tokenInfo.expiresAt) {
+        temporaryQrTokens.delete(token); 
+        return null; 
+    }
+
+    return tokenInfo;
+};
+
+
+const cleanExpiredTokens = () => {
+    const now = new Date();
+    for (let [token, info] of temporaryQrTokens) {
+        if (now > info.expiresAt) {
+            temporaryQrTokens.delete(token);
+        }
+    }
+};
