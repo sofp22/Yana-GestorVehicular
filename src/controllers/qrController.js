@@ -39,7 +39,7 @@ export const generateMaintenanceQr = async (req, res) => {
         cleanExpiredTokens();
 
         // 3. Construir URL del SSR (desde variable de entorno)
-        const ssrBaseUrl = process.env.SSR_BASE_URL || 'https://yana-gestorvehicular.onrender.com';
+        const ssrBaseUrl = process.env.SSR_BASE_URL || 'https://yana-gestorvehicular.onrender.com/api/mantenimientos';
         const workshopFormUrl = `${ssrBaseUrl}/workshop-submit?token=${shortCode}`;
 
         // 4. Generar QR

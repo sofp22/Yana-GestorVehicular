@@ -1,7 +1,7 @@
 import path from 'path';
 
 export function showWorkshopForm(req, res) {
-  const token = req.query.token;
+  const { token } = req.params;
   if (!token) {
     return res.status(400).send('Falta el token QR en la URL.');
   }
