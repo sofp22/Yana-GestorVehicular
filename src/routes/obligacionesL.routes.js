@@ -1,15 +1,23 @@
 
 import { Router } from 'express';
-import obligacionesLController from '../controllers/obligacionesLController.js';
 import { verifyToken } from '../middleware/authJwt.js';
+import { uploadObligacionesDocumento } from '../controllers/obligacionesLController.js'; // Importa Multer middleware
+// --- CAMBIO CLAVE AQUÍ: Importar las funciones específicas con named exports ---
+import {
+    createObligacionL,
+    getObligacionLById,
+    getAllObligacionesL,
+    updateObligacionL,
+    deleteObligacionL
+} from '../controllers/obligacionesLController.js'; // Importa las funciones con llaves
 
 const router = Router();
 
-// Rutas de Obligaciones Legales - Protegidas por JWT
-router.get('/vehiculo/:vehiculoId', verifyToken, obligacionesLController.getAllObligacionesL);
-router.get('/:id', verifyToken, obligacionesLController.getObligacionesLById);
-router.post('/', verifyToken, obligacionesLController.createObligacionesL);
-router.put('/:id', verifyToken, obligacionesLController.updateObligacionesL);
-
+// Rutas para Obligaciones Legales
+router.post('/', verifyToken, uploadObligacionesDocumento.single('documento'), createObligacionL);
+router.get('/:id', verifyToken, getObligacionLById);
+router.get('/', verifyToken, getAllObligacionesL);
+router.put('/:id', verifyToken, uploadObligacionesDocumento.single('documento'), updateObligacionL); // Permite actualizar el documento
+router.delete('/:id', verifyToken, deleteObligacionL);
 
 export default router;
