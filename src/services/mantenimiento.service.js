@@ -1,4 +1,4 @@
-
+// src/services/mantenimiento.service.js
 import db from '../models/index.js';
 import path from 'path';
 import fs from 'fs/promises';
@@ -6,12 +6,16 @@ import { v4 as uuidv4 } from 'uuid';
 
 const Mantenimiento = db.models.Mantenimiento;
 const Vehiculo = db.models.Vehiculo;
+const Propietario = db.models.Propietario; // Asegúrate de importar Propietario
+const TallerMecanico = db.models.TallerMecanico; // Asegúrate de importar TallerMecanico
 
-const UPLOADS_DIR = 'src/uploads/mantenimientos';
+// Definir la ruta base para guardar los archivos en el servidor
+const UPLOADS_DIR_SERVER = path.resolve('src/uploads/mantenimientos'); // Ruta absoluta en el servidor
+const UPLOADS_DIR_PUBLIC = '/uploads/mantenimientos'; // Ruta pública para acceder desde el frontend
 
 class MantenimientoService {
+    // Obtener mantenimientos por vehiculoId (con verificación de propietario)
     async getMantenimientos(vehiculoId, propietarioId) {
-        // Verificar que el vehículo pertenezca al propietario usando el ID UUID del vehículo
         const vehiculo = await Vehiculo.findOne({ where: { id: vehiculoId, propietarioId: propietarioId } });
         if (!vehiculo) {
             throw { status: 404, message: 'Vehículo no encontrado o no pertenece a este propietario.' };
@@ -19,6 +23,30 @@ class MantenimientoService {
 
         return await Mantenimiento.findAll({
             where: { vehiculoId: vehiculoId },
+            include: [
+                { model: Vehiculo, as: 'vehiculo', attributes: ['id', 'placa', 'marca', 'modelo'] },
+                { model: TallerMecanico, as: 'tallerMecanico', attributes: ['id', 'nombre', 'nitOCedula'] }
+            ],
+            order: [['fecha', 'DESC']]
+        });
+    }
+
+    // Nuevo método para obtener todos los mantenimientos de un propietario
+    async getMantenimientosByPropietario(propietarioId) {
+        return await Mantenimiento.findAll({
+            include: [
+                {
+                    model: Vehiculo,
+                    as: 'vehiculo',
+                    where: { propietarioId: propietarioId },
+                    attributes: ['id', 'placa', 'marca', 'modelo']
+                },
+                {
+                    model: TallerMecanico,
+                    as: 'tallerMecanico',
+                    attributes: ['id', 'nombre', 'nitOCedula']
+                }
+            ],
             order: [['fecha', 'DESC']]
         });
     }
@@ -29,7 +57,12 @@ class MantenimientoService {
                 model: Vehiculo,
                 as: 'vehiculo',
                 where: { propietarioId: propietarioId }, // Asegura que el vehículo pertenece al propietario
-                attributes: ['id', 'placa']
+                attributes: ['id', 'placa', 'marca', 'modelo']
+            },
+            {
+                model: TallerMecanico,
+                as: 'tallerMecanico',
+                attributes: ['id', 'nombre', 'nitOCedula']
             }]
         });
 
@@ -48,24 +81,25 @@ class MantenimientoService {
             throw { status: 403, message: 'No tiene permiso para agregar mantenimientos a este vehículo.' };
         }
 
-        let filePath = null;
+        let publicFilePath = null;
         if (file) {
-            await fs.mkdir(UPLOADS_DIR, { recursive: true });
+            await fs.mkdir(UPLOADS_DIR_SERVER, { recursive: true });
             const fileName = `${vehiculoId}-${uuidv4()}-${file.originalname}`;
-            filePath = path.join(UPLOADS_DIR, fileName);
-            await fs.writeFile(filePath, file.buffer);
+            const serverFilePath = path.join(UPLOADS_DIR_SERVER, fileName);
+            await fs.writeFile(serverFilePath, file.buffer); // Guarda el buffer del archivo
+            publicFilePath = path.join(UPLOADS_DIR_PUBLIC, fileName); // Ruta pública
         }
 
         try {
             const newMantenimiento = await Mantenimiento.create({
                 ...mantenimientoData,
-                facturaPath: filePath,
+                facturaPath: publicFilePath, // Guardar la ruta pública
                 vehiculoId: vehiculoId
             });
             return newMantenimiento;
         } catch (error) {
-            if (filePath) {
-                await fs.unlink(path.resolve(filePath)).catch(err => console.error('Error al eliminar archivo residual:', err));
+            if (publicFilePath) { // Si se intentó guardar un archivo y falló la creación en DB
+                await fs.unlink(path.resolve('src', publicFilePath)).catch(err => console.error('Error al eliminar archivo residual:', err));
             }
             throw error;
         }
@@ -75,15 +109,17 @@ class MantenimientoService {
         const mantenimiento = await this.getMantenimientoById(id, propietarioId);
 
         let oldFacturaPath = mantenimiento.facturaPath;
-        let newFacturaPath = null;
+        let newPublicFilePath = null;
+        let newServerFilePath = null;
 
         if (file) {
-            await fs.mkdir(UPLOADS_DIR, { recursive: true });
+            await fs.mkdir(UPLOADS_DIR_SERVER, { recursive: true });
             const fileName = `${mantenimiento.vehiculoId}-${uuidv4()}-${file.originalname}`;
-            newFacturaPath = path.join(UPLOADS_DIR, fileName);
-            await fs.writeFile(newFacturaPath, file.buffer);
+            newServerFilePath = path.join(UPLOADS_DIR_SERVER, fileName);
+            await fs.writeFile(newServerFilePath, file.buffer);
+            newPublicFilePath = path.join(UPLOADS_DIR_PUBLIC, fileName);
 
-            mantenimientoData.facturaPath = newFacturaPath;
+            mantenimientoData.facturaPath = newPublicFilePath;
         } else if (mantenimientoData.facturaPath === null) { // Si se envía 'facturaPath: null' explícitamente para borrarlo
             mantenimientoData.facturaPath = null;
         }
@@ -92,13 +128,15 @@ class MantenimientoService {
             await mantenimiento.update(mantenimientoData);
 
             // Eliminar archivo antiguo si se subió uno nuevo o si se pidió borrar
-            if (oldFacturaPath && (newFacturaPath || mantenimientoData.facturaPath === null)) {
-                await fs.unlink(path.resolve(oldFacturaPath)).catch(err => console.warn('No se pudo eliminar el archivo de factura antiguo:', err));
+            if (oldFacturaPath && (newPublicFilePath || mantenimientoData.facturaPath === null)) {
+                // Convertir la ruta pública a ruta del servidor para eliminar
+                const oldServerFilePath = path.join(path.resolve('src', 'uploads'), oldFacturaPath.replace('/uploads/', ''));
+                await fs.unlink(oldServerFilePath).catch(err => console.warn('No se pudo eliminar el archivo de factura antiguo:', err));
             }
             return mantenimiento;
         } catch (error) {
-            if (newFacturaPath) {
-                await fs.unlink(path.resolve(newFacturaPath)).catch(err => console.error('Error al eliminar nuevo archivo residual:', err));
+            if (newServerFilePath) { // Si se intentó guardar un nuevo archivo y falló la actualización en DB
+                await fs.unlink(newServerFilePath).catch(err => console.error('Error al eliminar nuevo archivo residual:', err));
             }
             throw error;
         }
@@ -106,12 +144,14 @@ class MantenimientoService {
 
     async deleteMantenimiento(id, propietarioId) {
         const mantenimiento = await this.getMantenimientoById(id, propietarioId);
-        const filePath = mantenimiento.facturaPath;
+        const publicFilePath = mantenimiento.facturaPath;
 
         await mantenimiento.destroy();
 
-        if (filePath) {
-            await fs.unlink(path.resolve(filePath)).catch(err => console.warn('No se pudo eliminar el archivo de mantenimiento:', err));
+        if (publicFilePath) {
+            // Convertir la ruta pública a ruta del servidor para eliminar
+            const serverFilePath = path.join(path.resolve('src', 'uploads'), publicFilePath.replace('/uploads/', ''));
+            await fs.unlink(serverFilePath).catch(err => console.warn('No se pudo eliminar el archivo de mantenimiento:', err));
         }
         return { message: 'Mantenimiento y archivo asociado eliminados exitosamente.' };
     }

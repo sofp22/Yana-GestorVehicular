@@ -1,3 +1,4 @@
+// src/models/mantenimiento.js
 import { DataTypes } from 'sequelize';
 
 export default (sequelize) => {
@@ -16,9 +17,9 @@ export default (sequelize) => {
             type: DataTypes.DATE,
             allowNull: false
         },
-        fechaVencimiento: {
+        fechaVencimiento: { // Este campo se usará para la fecha del próximo mantenimiento
             type: DataTypes.DATE,
-            allowNull: false
+            allowNull: true // CAMBIO CLAVE: Ahora puede ser nulo
         },
         kilometraje: {
             type: DataTypes.INTEGER,

@@ -1,46 +1,31 @@
+// src/controllers/mantenimientoController.js
 import db from '../models/index.js';
 import { validateQrToken } from './qrController.js';
-import multer from 'multer';
-import path from 'path';
-import { fileURLToPath } from 'url';
+// REMOVIDO: No importamos Multer aquí, se usa en las rutas.
+// import multer from 'multer'; 
+// import path from 'path'; // No es necesario si no se usa path directamente para Multer aquí
+// import { fileURLToPath } from 'url'; // No es necesario si no se usa __dirname directamente aquí
 import { Op } from 'sequelize';
 import { createCalendarEvent } from '../services/googleCalendarService.js';
+import MantenimientoService from '../services/mantenimiento.service.js'; // Importa el servicio
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// REMOVIDO: La configuración de Multer ya no está aquí. Se importa desde middleware/upload.js y se usa en las rutas.
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
+// const storageMantenimiento = multer.diskStorage({ ... });
+// export const uploadMantenimientoFactura = multer({ storage: storageMantenimiento });
 
-// Configuración de Multer para la carga de facturas de mantenimiento
-const storageMantenimiento = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const uploadPath = path.join(__dirname, '../uploads/mantenimientos');
-        // Asegúrate de que la carpeta existe o créala
-        // import fs from 'fs';
-        // if (!fs.existsSync(uploadPath)) {
-        //     fs.mkdirSync(uploadPath, { recursive: true });
-        // }
-        cb(null, uploadPath);
-    },
-    filename: (req, file, cb) => {
-        // El nombre de archivo que se guardará en el disco (ej. 1719876543210-mi_factura.pdf)
-        cb(null, `${Date.now()}-${file.originalname}`);
-    }
-});
-
-export const uploadMantenimientoFactura = multer({ storage: storageMantenimiento });
 
 // --- Helper para crear evento de Google Calendar para recordatorio de próximo mantenimiento ---
 const checkAndSendNextMaintenanceReminder = async (mantenimiento, vehiculoId) => {
-    // Solo si hay una fecha de próximo mantenimiento definida
+    // Usa mantenimiento.fechaVencimiento que es el nombre del campo en el modelo.
     if (mantenimiento.fechaVencimiento) {
         const nextMaintenanceDate = new Date(mantenimiento.fechaVencimiento);
         const today = new Date();
-
-        // Ajustar fechas a medianoche para comparación solo de día, mes, año
         today.setHours(0, 0, 0, 0);
         nextMaintenanceDate.setHours(0, 0, 0, 0);
 
-        // La condición ahora es que la fecha del próximo mantenimiento sea hoy o en el futuro.
-        if (nextMaintenanceDate >= today) { // Solo si la fecha es hoy o en el futuro
+        if (nextMaintenanceDate >= today) {
             try {
                 const vehiculo = await db.models.Vehiculo.findByPk(vehiculoId, {
                     include: [{ model: db.models.Propietario, as: 'propietario' }]
@@ -50,14 +35,10 @@ const checkAndSendNextMaintenanceReminder = async (mantenimiento, vehiculoId) =>
                     const summary = `Recordatorio Mantenimiento: ${mantenimiento.tipo} - ${vehiculo.placa}`;
                     const description = `El mantenimiento "${mantenimiento.tipo}" para su vehículo ${vehiculo.placa} (${vehiculo.marca} ${vehiculo.modelo}) está programado para el ${mantenimiento.fechaVencimiento.toISOString().split('T')[0]}. Kilometraje actual: ${mantenimiento.kilometraje}.`;
 
-                    // El evento se crea en la fecha de vencimiento/próximo mantenimiento
-                    const eventStart = new Date(nextMaintenanceDate.getFullYear(), nextMaintenanceDate.getMonth(), nextMaintenanceDate.getDate(), 9, 0, 0); // Evento a las 9 AM
-                    const eventEnd = new Date(nextMaintenanceDate.getFullYear(), nextMaintenanceDate.getMonth(), nextMaintenanceDate.getDate(), 10, 0, 0); // Termina a las 10 AM
+                    const eventStart = new Date(nextMaintenanceDate.getFullYear(), nextMaintenanceDate.getMonth(), nextMaintenanceDate.getDate(), 9, 0, 0);
+                    const eventEnd = new Date(nextMaintenanceDate.getFullYear(), nextMaintenanceDate.getMonth(), nextMaintenanceDate.getDate(), 10, 0, 0);
 
-                    // Recordatorios:
-                    // 0 minutos: alarma en el momento del evento (9 AM del día del mantenimiento)
-                    // 60 * 24 minutos: alarma 24 horas antes del evento (9 AM del día anterior al mantenimiento)
-                    const reminderMinutes = [0, 60 * 24]; // [mismo día, un día antes]
+                    const reminderMinutes = [0, 60 * 24];
 
                     await createCalendarEvent(
                         summary,
@@ -77,59 +58,84 @@ const checkAndSendNextMaintenanceReminder = async (mantenimiento, vehiculoId) =>
     }
 };
 
-
+// --- Funciones del Controlador de Mantenimiento (CRUD + QR) ---
 
 // CREATE Mantenimiento por Propietario (protegida por JWT)
 export const createMantenimiento = async (req, res) => {
+    console.log("DEBUG: createMantenimiento - req.body:", req.body);
+    console.log("DEBUG: createMantenimiento - req.file:", req.file);
     try {
-        const { vehiculoId, tipo, fecha, kilometraje, descripcion, costo, fechaProximoMantenimiento } = req.body;
+        // CAMBIO CLAVE: Desestructurar 'fechaVencimiento' para la ruta de propietario
+        const { vehiculoId, tipo, fecha, kilometraje, descripcion, costo, fechaVencimiento } = req.body || {};
         
-        // req.file.filename es el nombre único que Multer le dio al archivo guardado (ej. 1719876543210-original.pdf)
-        const facturaPath = req.file ? `/uploads/mantenimientos/${req.file.filename}` : null;
-
-        const vehiculoExistente = await db.models.Vehiculo.findOne({
-            where: { id: vehiculoId, propietarioId: req.user.id }
-        });
-
-        if (!vehiculoExistente) {
-            return res.status(404).json({ message: "Vehículo no encontrado o no pertenece al propietario logueado." });
+        // Validación básica para campos obligatorios
+        if (!vehiculoId || !tipo || !fecha || !kilometraje || !costo) {
+            return res.status(400).json({ message: "Faltan campos obligatorios (vehiculoId, tipo, fecha, kilometraje, costo)." });
         }
 
-        const newMantenimiento = await db.models.Mantenimiento.create({
+        // El servicio espera los datos del mantenimiento y el buffer del archivo
+        const mantenimientoData = {
             vehiculoId,
             tipo,
-            fecha,
-            kilometraje,
+            fecha: fecha ? new Date(fecha) : null,
+            kilometraje: parseFloat(kilometraje),
             descripcion,
-            costo,
-            facturaPath, 
-            fechaVencimiento: fechaVencimiento || null
-        });
+            costo: parseFloat(costo),
+            fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null
+        };
 
-    
+        // CAMBIO CLAVE: Usar el servicio para crear el mantenimiento
+        const newMantenimiento = await MantenimientoService.createMantenimiento(
+            mantenimientoData, 
+            req.file ? req.file : null, // Pasar el objeto file completo (Multer MemoryStorage)
+            req.user.id // Pasar el propietarioId del JWT
+        );
+
         await checkAndSendNextMaintenanceReminder(newMantenimiento, vehiculoId);
 
         res.status(201).json({ message: "Mantenimiento creado exitosamente por propietario", mantenimiento: newMantenimiento });
 
     } catch (error) {
         console.error("Error al crear mantenimiento por propietario:", error);
+        // Manejo de errores del servicio
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 };
 
 // CREATE Mantenimiento por Taller Mecánico (NO protegida por JWT)
 export const createMantenimientoByWorkshop = async (req, res) => {
+    // --- CONSOLE.LOGS PARA DEPURAR req.body y req.file ---
+    console.log("DEBUG: createMantenimientoByWorkshop - req.body:", req.body);
+    console.log("DEBUG: createMantenimientoByWorkshop - req.file:", req.file);
+    // ---------------------------------------------------
     try {
-        const { token } = req.query;
-        const { nitOCedulaTaller, tipo, fecha, kilometraje, descripcion, costo, fechaVencimiento } = req.body;
-    
-        const facturaPath = req.file ? `/uploads/mantenimientos/${req.file.filename}` : null;
+        const token = req.query.token; 
+        let tokenInfo = null;
 
-        const tokenInfo = validateQrToken(token);
-        if (!tokenInfo) {
-            return res.status(401).json({ message: "Token de QR inválido o expirado." });
+        if (!token) {
+            if (req.vehiculoIdFromToken) {
+                tokenInfo = { vehiculoId: req.vehiculoIdFromToken };
+            } else {
+                return res.status(400).json({ message: "Token de QR o ID de vehículo no proporcionado." });
+            }
+        } else {
+            tokenInfo = validateQrToken(token);
+            if (!tokenInfo) {
+                return res.status(401).json({ message: "Token de QR inválido o expirado." });
+            }
         }
+        
         const vehiculoId = tokenInfo.vehiculoId;
+
+        // CAMBIO CLAVE: Esperar 'fechaVencimiento' del body para el taller
+        const { nitOCedulaTaller, tipo, fecha, kilometraje, descripcion, costo, fechaVencimiento } = req.body;
+        
+        if (!nitOCedulaTaller || !tipo || !fecha || !kilometraje || !costo) {
+            return res.status(400).json({ message: "Faltan campos obligatorios (nitOCedulaTaller, tipo, fecha, kilometraje, costo)." });
+        }
 
         const vehiculoExistente = await db.models.Vehiculo.findByPk(vehiculoId);
         if (!vehiculoExistente) {
@@ -141,7 +147,6 @@ export const createMantenimientoByWorkshop = async (req, res) => {
         });
 
         if (!tallerMecanico) {
-            
             tallerMecanico = await db.models.TallerMecanico.create({
                 nitOCedula: nitOCedulaTaller,
                 nombre: `Taller ${nitOCedulaTaller}`
@@ -149,19 +154,24 @@ export const createMantenimientoByWorkshop = async (req, res) => {
             console.log(`Nuevo taller mecánico registrado: ${tallerMecanico.nombre}`);
         }
 
-        const newMantenimiento = await db.models.Mantenimiento.create({
+        const mantenimientoData = {
             vehiculoId,
             tallerMecanicoId: tallerMecanico.id,
             tipo,
-            fecha,
-            kilometraje,
+            fecha: fecha ? new Date(fecha) : null,
+            kilometraje: parseFloat(kilometraje),
             descripcion,
-            costo,
-            facturaPath, 
-            fechaVencimiento: fechaVencimiento || null
-        });
+            costo: parseFloat(costo),
+            fechaVencimiento: fechaVencimiento ? new Date(fechaVencimiento) : null // Usar fechaVencimiento
+        };
 
-        // Envía recordatorio si aplica al crear (por taller)
+        // CAMBIO CLAVE: Usar el servicio para crear el mantenimiento
+        const newMantenimiento = await MantenimientoService.createMantenimiento(
+            mantenimientoData, 
+            req.file ? req.file : null, // Pasar el objeto file completo (Multer MemoryStorage)
+            vehiculoExistente.propietarioId // Pasar el propietarioId del vehículo
+        );
+
         await checkAndSendNextMaintenanceReminder(newMantenimiento, vehiculoId);
 
         res.status(201).json({
@@ -176,6 +186,9 @@ export const createMantenimientoByWorkshop = async (req, res) => {
 
     } catch (error) {
         console.error("Error al crear mantenimiento por taller mecánico:", error);
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
         res.status(500).json({ message: "Error interno del servidor al registrar mantenimiento por taller", error: error.message });
     }
 };
@@ -184,30 +197,15 @@ export const createMantenimientoByWorkshop = async (req, res) => {
 export const getMantenimientoById = async (req, res) => {
     try {
         const { id } = req.params;
-        const mantenimiento = await db.models.Mantenimiento.findByPk(id, {
-            include: [
-                {
-                    model: db.models.Vehiculo,
-                    as: 'vehiculo',
-                    include: [{ model: db.models.Propietario, as: 'propietario' }], 
-                    attributes: ['id', 'placa', 'marca', 'modelo']
-                },
-                {
-                    model: db.models.TallerMecanico,
-                    as: 'tallerMecanico',
-                    attributes: ['id', 'nombre', 'nitOCedula']
-                }
-            ]
-        });
-
-        // Asegurarse de que el mantenimiento pertenece a uno de los vehículos del propietario logueado
-        if (!mantenimiento || !mantenimiento.vehiculo || mantenimiento.vehiculo.propietario.id !== req.user.id) {
-            return res.status(404).json({ message: "Mantenimiento no encontrado o no autorizado." });
-        }
+        // CAMBIO CLAVE: Usar el servicio para obtener el mantenimiento
+        const mantenimiento = await MantenimientoService.getMantenimientoById(id, req.user.id);
 
         res.status(200).json(mantenimiento);
     } catch (error) {
         console.error("Error al obtener mantenimiento por ID:", error);
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 };
@@ -215,75 +213,69 @@ export const getMantenimientoById = async (req, res) => {
 // GET Todos los mantenimientos del propietario logueado (Protegida)
 export const getAllMantenimientos = async (req, res) => {
     try {
-        const mantenimientos = await db.models.Mantenimiento.findAll({
-            include: [
-                {
-                    model: db.models.Vehiculo,
-                    as: 'vehiculo',
-                    where: { propietarioId: req.user.id }, // Filtrar por los vehículos del propietario logueado
-                    attributes: ['id', 'placa', 'marca', 'modelo'] // Incluir solo campos relevantes del vehículo
-                },
-                {
-                    model: db.models.TallerMecanico,
-                    as: 'tallerMecanico',
-                    attributes: ['id', 'nombre', 'nitOCedula']
-                }
-            ],
-            order: [['fecha', 'DESC']] 
-        });
+        // CAMBIO CLAVE: Usar el servicio para obtener todos los mantenimientos del propietario
+        const mantenimientos = await MantenimientoService.getMantenimientosByPropietario(req.user.id);
 
         res.status(200).json(mantenimientos);
     } catch (error) {
         console.error("Error al obtener todos los mantenimientos:", error);
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 };
 
 // UPDATE Mantenimiento (Protegida)
 export const updateMantenimiento = async (req, res) => {
+    console.log("DEBUG: updateMantenimiento - req.body:", req.body);
+    console.log("DEBUG: updateMantenimiento - req.file:", req.file);
     try {
         const { id } = req.params;
+        // CAMBIO CLAVE: Desestructurar 'fechaVencimiento' para la ruta de propietario
         const { tipo, fecha, kilometraje, descripcion, costo, fechaVencimiento } = req.body;
-        // --- CAMBIO CLAVE AQUÍ: Guardar la ruta pública del archivo si se sube uno nuevo ---
-        const facturaPath = req.file ? `/uploads/mantenimientos/${req.file.filename}` : undefined; // Use undefined para no sobrescribir si no se sube nuevo archivo
+        
+        const mantenimientoData = {
+            tipo,
+            fecha: fecha ? new Date(fecha) : undefined, // undefined para no actualizar si no se envía
+            kilometraje: kilometraje ? parseFloat(kilometraje) : undefined,
+            descripcion,
+            costo: costo ? parseFloat(costo) : undefined,
+            fechaVencimiento: fechaVencimiento !== undefined ? (fechaVencimiento ? new Date(fechaVencimiento) : null) : undefined // undefined para no actualizar si no se envía
+        };
 
-        const mantenimiento = await db.models.Mantenimiento.findByPk(id, {
-            include: [{ model: db.models.Vehiculo, as: 'vehiculo', where: { propietarioId: req.user.id } }]
-        });
+        // CAMBIO CLAVE: Usar el servicio para actualizar el mantenimiento
+        const updatedMantenimiento = await MantenimientoService.updateMantenimiento(
+            id, 
+            mantenimientoData, 
+            req.file ? req.file : null, // Pasar el objeto file completo (Multer MemoryStorage)
+            req.user.id
+        );
 
-        if (!mantenimiento) {
-            return res.status(404).json({ message: "Mantenimiento no encontrado o no autorizado." });
-        }
+        await checkAndSendNextMaintenanceReminder(updatedMantenimiento, updatedMantenimiento.vehiculoId);
 
-        // Actualizar campos si se proporcionan en el body
-        mantenimiento.tipo = tipo || mantenimiento.tipo;
-        mantenimiento.fecha = fecha || mantenimiento.fecha;
-        mantenimiento.kilometraje = kilometraje || mantenimiento.kilometraje;
-        mantenimiento.descripcion = descripcion || mantenimiento.descripcion;
-        mantenimiento.costo = costo || mantenimiento.costo;
-        if (facturaPath !== undefined) { // Solo actualizar si se envió un nuevo archivo
-            mantenimiento.facturaPath = facturaPath;
-        }
-        // Permitir que fechaProximoMantenimiento sea null si se envía explícitamente null
-        mantenimiento.fechaVencimiento = fechaVencimiento !== undefined ? fechaProximoMantenimiento : mantenimiento.fechaProximoMantenimiento;
-
-        await mantenimiento.save();
-
-        // Re-check y envía recordatorio si la fecha del próximo mantenimiento se actualizó o ya aplica
-        await checkAndSendNextMaintenanceReminder(mantenimiento, mantenimiento.vehiculoId);
-
-        res.status(200).json({ message: "Mantenimiento actualizado exitosamente", mantenimiento });
+        res.status(200).json({ message: "Mantenimiento actualizado exitosamente", mantenimiento: updatedMantenimiento });
     } catch (error) {
         console.error("Error al actualizar mantenimiento:", error);
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
         res.status(500).json({ message: "Error interno del servidor", error: error.message });
     }
 };
 
-
-
-
-
-
-
-
-
+// DELETE Mantenimiento (Protegida)
+export const deleteMantenimiento = async (req, res) => {
+    try {
+        const { id } = req.params;
+        // CAMBIO CLAVE: Usar el servicio para eliminar el mantenimiento
+        const result = await MantenimientoService.deleteMantenimiento(id, req.user.id);
+        res.status(200).json(result);
+    } catch (error) {
+        console.error("Error al eliminar mantenimiento:", error);
+        if (error.status) {
+            return res.status(error.status).json({ message: error.message });
+        }
+        res.status(500).json({ message: "Error interno del servidor", error: error.message });
+    }
+};

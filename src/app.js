@@ -4,7 +4,7 @@ import { fileURLToPath } from 'url';
 import cors from 'cors';
 import morgan from 'morgan';
 
-import allRoutes from './routes/index.js';            // tus rutas API (/api/...)
+import allRoutes from './routes/index.js';          // tus rutas API (/api/...)
 import workshopRoutes from './routes/workshop.routes.js'; // tus GET/POST SSR
 
 const app = express();
@@ -20,12 +20,13 @@ app.use(express.urlencoded({ extended: true }));
 app.use(morgan('dev'));
 
 // 1) Sirve tu carpeta public (CSS/JS/HTML SSR)
-app.use(express.static(path.join(__dirname, '../public')));
+// Esto permite que archivos como public/index.html sean accesibles en /index.html
+app.use(express.static(path.join(__dirname, '../web')));
 
-// 2) Monta tus rutas SSR **antes** de las API, y **sin** prefijo `/api`:
-//    - GET  /mantenimientos/workshop-submit → muestra el formulario
-//    - POST /mantenimientos/workshop-submit → procesa el envío
-app.use('/', workshopRoutes);
+// --- CAMBIO CLAVE AQUÍ: Monta tus rutas SSR en un prefijo que no sea '/api' ---
+// Si quieres que la URL sea http://localhost:3000/mantenimientos/workshop-submit?token=...
+// entonces el prefijo debe ser '/mantenimientos'.
+app.use('/mantenimientos', workshopRoutes); // <--- CAMBIO AQUÍ: Eliminado '/api' y movido a un prefijo más adecuado
 
 // 3) Monta tus rutas de API bajo `/api`
 app.use('/api', allRoutes);

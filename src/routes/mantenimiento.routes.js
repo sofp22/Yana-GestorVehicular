@@ -1,22 +1,25 @@
+// src/routes/mantenimiento.routes.js
 import { Router } from 'express';
 import { verifyToken } from '../middleware/authJwt.js'; // Necesario para rutas protegidas
+// CAMBIO CLAVE: Importar uploadMantenimientoFactura desde el middleware centralizado
+import { uploadMantenimientoFactura } from '../middleware/upload.js'; 
 import {
     createMantenimiento, 
     createMantenimientoByWorkshop, 
     getAllMantenimientos, 
     getMantenimientoById, 
     updateMantenimiento, 
-    uploadMantenimientoFactura // Middleware para Multer
+    deleteMantenimiento // Asegurarse de importar deleteMantenimiento
 } from '../controllers/mantenimientoController.js'; 
 
 const router = Router();
 
 
-// Permite subir un archivo de factura
+// Permite subir un archivo de factura (para el propietario)
 router.post(
     '/',
     verifyToken, // Propietario debe estar autenticado
-    uploadMantenimientoFactura.single('factura'), // Middleware de Multer para el archivo 'factura'
+    uploadMantenimientoFactura, // Middleware de Multer para el archivo 'factura' (ya configurado con .single('factura') en upload.js)
     createMantenimiento
 );
 
@@ -40,14 +43,22 @@ router.get(
 router.put(
     '/:id',
     verifyToken, 
-    uploadMantenimientoFactura.single('factura'), // Middleware de Multer para el archivo 'factura' (puede ser opcional)
+    uploadMantenimientoFactura, // Middleware de Multer para el archivo 'factura' (ya configurado con .single('factura') en upload.js)
     updateMantenimiento
 );
 
-//registro de mantenimiento por parte del taller
+// Ruta para que el propietario (autenticado) elimine UN mantenimiento por su ID
+router.delete(
+    '/:id',
+    verifyToken,
+    deleteMantenimiento
+);
+
+
+//registro de mantenimiento por parte del taller (sin JWT, usa token QR)
 router.post(
     '/workshop-submit',
-    uploadMantenimientoFactura.single('factura'), // Multer también para taller si sube factura
+    uploadMantenimientoFactura, // Multer también para taller si sube factura (ya configurado con .single('factura') en upload.js)
     createMantenimientoByWorkshop
 );
 

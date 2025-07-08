@@ -34,7 +34,7 @@ export const generateMaintenanceQr = async (req, res) => {
             shortCode = generateShortCode();
         } while (temporaryQrTokens.has(shortCode)); // Evitar colisiones
 
-        const expiresAt = new Date(Date.now() + QR_TOKEN_EXPIRATION_MINUTES * 60 * 1000);
+        const expiresAt = new Date(Date.now() + QR_TOKEN_EXPIRATION_MINUTES * 60 * 10000);
         temporaryQrTokens.set(shortCode, { vehiculoId: vehiculo.id, expiresAt });
         cleanExpiredTokens();
 

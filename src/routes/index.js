@@ -1,3 +1,4 @@
+// src/routes/index.js
 import { Router } from 'express';
 import authRoutes from './auth.routes.js';
 import propietarioRoutes from './propietario.routes.js';
@@ -28,8 +29,6 @@ router.use('/obligacionesL', obligacionesLRoutes);
 router.use('/reportes', reporteRoutes);
 
 // Nuevas Rutas de QR
-router.use('/qr', qrRoutes); // Añade las rutas de QR
-
 router.use('/qr', qrRoutes); // Añade las rutas de QR
 
 export default router;
