@@ -1,70 +1,82 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro de Mantenimiento</title>
-  <link
-    href="/css/materialize.min.css"
-    rel="stylesheet"
-  >
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Registro de Mantenimiento (Taller)</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f4; }
+        .container { max-width: 600px; margin: 20px auto; padding: 25px; background-color: #fff; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        h1 { text-align: center; color: #333; margin-bottom: 25px; }
+        div { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 8px; font-weight: bold; color: #555; }
+        input[type="text"], input[type="number"], input[type="file"], textarea {
+            width: calc(100% - 20px);
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+        input[type="submit"] {
+            display: block;
+            width: 100%;
+            padding: 12px 0;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+        }
+        input[type="submit"]:hover { background-color: #0056b3; }
+        .success-message { color: green; font-weight: bold; text-align: center; margin-top: 20px; }
+        .error-message { color: red; font-weight: bold; text-align: center; margin-top: 20px; }
+    </style>
 </head>
-<body class="grey lighten-4">
-  <div class="container">
-    <h4 class="blue-text text-darken-2">Registrar Mantenimiento</h4>
-    <form
-      id="mantenimientoForm"
-      action="/mantenimientos/workshop-submit?token={{TOKEN}}"
-      method="POST"
-      enctype="multipart/form-data"
-    >
-      <div class="input-field">
-        <input id="nit" name="nitOCedulaTaller" type="text" required>
-        <label for="nit">NIT o Cédula del Taller</label>
-      </div>
-      <div class="input-field">
-        <input id="tipo" name="tipo" type="text" required>
-        <label for="tipo">Tipo de Mantenimiento</label>
-      </div>
-      <div class="input-field">
-        <input id="fecha" name="fecha" type="date" required>
-        <label for="fecha" class="active">Fecha</label>
-      </div>
-      <div class="input-field">
-        <input id="km" name="kilometraje" type="number" required>
-        <label for="km">Kilometraje</label>
-      </div>
-      <div class="input-field">
-        <textarea id="desc" name="descripcion" class="materialize-textarea" required></textarea>
-        <label for="desc">Descripción</label>
-      </div>
-      <div class="input-field">
-        <input id="costo" name="costo" type="number" step="0.01" required>
-        <label for="costo">Costo</label>
-      </div>
-      <div class="input-field">
-        <input id="venc" name="fechaVencimiento" type="date">
-        <label for="venc" class="active">Próximo Mantenimiento (opcional)</label>
-      </div>
-      <div class="file-field input-field">
-        <div class="btn">
-          <span>Factura</span>
-          <input type="file" name="factura">
-        </div>
-        <div class="file-path-wrapper">
-          <input class="file-path validate" type="text" placeholder="Sube factura (opcional)">
-        </div>
-      </div>
-      <button class="btn blue darken-2" type="submit">Enviar</button>
-    </form>
-  </div>
+<body>
+    <div class="container">
+        <h1>Registro de Mantenimiento</h1>
+        <p>Por favor, complete los detalles del mantenimiento.</p>
 
-  <script src="/js/materialize.min.js"></script>
-  <script>
-    // Inicializa componentes Materialize
-    document.addEventListener('DOMContentLoaded', function(){
-      M.updateTextFields();
-    });
-  </script>
+        <form action="/api/mantenimientos/workshop-submit?token={{TOKEN}}" method="POST" enctype="multipart/form-data">
+            <div>
+                <label for="tipo">Tipo de Mantenimiento:</label>
+                <input type="text" id="tipo" name="tipo" placeholder="Ej: Cambio de aceite, Reparación de frenos" required>
+            </div>
+
+            <div>
+                <label for="fecha">Fecha del Mantenimiento:</label>
+                <input type="date" id="fecha" name="fecha" required>
+            </div>
+
+            <div>
+                <label for="kilometraje">Kilometraje Actual:</label>
+                <input type="number" id="kilometraje" name="kilometraje" placeholder="Ej: 50000" required>
+            </div>
+
+            <div>
+                <label for="descripcion">Descripción (opcional):</label>
+                <textarea id="descripcion" name="descripcion" rows="4" placeholder="Detalles del trabajo realizado..."></textarea>
+            </div>
+
+            <div>
+                <label for="costo">Costo Total ($):</label>
+                <input type="number" id="costo" name="costo" step="0.01" placeholder="Ej: 150.00" required>
+            </div>
+
+            <div>
+                <label for="fechaProximoMantenimiento">Fecha Próximo Mantenimiento (opcional):</label>
+                <input type="date" id="fechaProximoMantenimiento" name="fechaProximoMantenimiento">
+            </div>
+
+            <div>
+                <label for="factura">Adjuntar Factura/Documento:</label>
+                <input type="file" id="factura" name="factura" accept=".pdf,.jpg,.jpeg,.png">
+                </div>
+
+            <input type="submit" value="Registrar Mantenimiento">
+        </form>
+    </div>
 </body>
 </html>
