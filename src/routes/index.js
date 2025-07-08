@@ -30,4 +30,6 @@ router.use('/reportes', reporteRoutes);
 // Nuevas Rutas de QR
 router.use('/qr', qrRoutes); // Añade las rutas de QR
 
+router.use('/qr', qrRoutes); // Añade las rutas de QR
+
 export default router;

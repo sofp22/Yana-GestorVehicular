@@ -1,39 +1,36 @@
-
 import express from 'express';
+import path from 'path';
+import { fileURLToPath } from 'url';
 import cors from 'cors';
 import morgan from 'morgan';
-import allRoutes from './routes/index.js';
-import path from 'path'; // Importa path para servir archivos estáticos
-import { fileURLToPath } from 'url'; // Para __dirname en módulos ES
+
+import allRoutes from './routes/index.js';            // tus rutas API (/api/...)
+import workshopRoutes from './routes/workshop.routes.js'; // tus GET/POST SSR
 
 const app = express();
 
-// Para resolver __dirname en módulos ES
+// para __dirname en ES modules
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+const __dirname  = path.dirname(__filename);
 
-// Middlewares
-app.use(cors()); // Permite solicitudes desde otros dominios (frontend)
-app.use(express.json()); // Habilita el parsing de JSON en el body de las solicitudes
-app.use(express.urlencoded({ extended: true })); // Habilita el parsing de URL-encoded data
-app.use(morgan('dev')); // Logger de solicitudes HTTP para desarrollo
+// middlewares
+app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(morgan('dev'));
 
-// Servir archivos estáticos (uploads)
-// Asegúrate de que esta ruta coincida con los directorios de guardado de Multer
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+// 1) Sirve tu carpeta public (CSS/JS/HTML SSR)
+app.use(express.static(path.join(__dirname, '../public')));
 
-// Rutas de la API
+// 2) Monta tus rutas SSR **antes** de las API, y **sin** prefijo `/api`:
+//    - GET  /mantenimientos/workshop-submit → muestra el formulario
+//    - POST /mantenimientos/workshop-submit → procesa el envío
+app.use('/', workshopRoutes);
+
+// 3) Monta tus rutas de API bajo `/api`
 app.use('/api', allRoutes);
 
-// Ruta de prueba
-app.get('/', (req, res) => {
-    res.send('API de Gestión de Vehículos está activa!');
-});
-
-// Manejador de errores global (si tienes uno más complejo)
-// app.use((err, req, res, next) => {
-//     console.error(err.stack);
-//     res.status(500).send('Algo salió mal!');
-// });
+// Ruta raíz de sanity check
+app.get('/', (req, res) => res.send('API de Gestión de Vehículos está activa!'));
 
 export default app;

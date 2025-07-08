@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Registro de Mantenimiento</title>
+  <link
+    href="/css/materialize.min.css"
+    rel="stylesheet"
+  >
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+</head>
+<body class="grey lighten-4">
+  <div class="container">
+    <h4 class="blue-text text-darken-2">Registrar Mantenimiento</h4>
+    <form
+      id="mantenimientoForm"
+      action="/mantenimientos/workshop-submit?token={{TOKEN}}"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <div class="input-field">
+        <input id="nit" name="nitOCedulaTaller" type="text" required>
+        <label for="nit">NIT o Cédula del Taller</label>
+      </div>
+      <div class="input-field">
+        <input id="tipo" name="tipo" type="text" required>
+        <label for="tipo">Tipo de Mantenimiento</label>
+      </div>
+      <div class="input-field">
+        <input id="fecha" name="fecha" type="date" required>
+        <label for="fecha" class="active">Fecha</label>
+      </div>
+      <div class="input-field">
+        <input id="km" name="kilometraje" type="number" required>
+        <label for="km">Kilometraje</label>
+      </div>
+      <div class="input-field">
+        <textarea id="desc" name="descripcion" class="materialize-textarea" required></textarea>
+        <label for="desc">Descripción</label>
+      </div>
+      <div class="input-field">
+        <input id="costo" name="costo" type="number" step="0.01" required>
+        <label for="costo">Costo</label>
+      </div>
+      <div class="input-field">
+        <input id="venc" name="fechaVencimiento" type="date">
+        <label for="venc" class="active">Próximo Mantenimiento (opcional)</label>
+      </div>
+      <div class="file-field input-field">
+        <div class="btn">
+          <span>Factura</span>
+          <input type="file" name="factura">
+        </div>
+        <div class="file-path-wrapper">
+          <input class="file-path validate" type="text" placeholder="Sube factura (opcional)">
+        </div>
+      </div>
+      <button class="btn blue darken-2" type="submit">Enviar</button>
+    </form>
+  </div>
+
+  <script src="/js/materialize.min.js"></script>
+  <script>
+    // Inicializa componentes Materialize
+    document.addEventListener('DOMContentLoaded', function(){
+      M.updateTextFields();
+    });
+  </script>
+</body>
+</html>
