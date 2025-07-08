@@ -265,7 +265,7 @@ export const updateMantenimiento = async (req, res) => {
             mantenimiento.facturaPath = facturaPath;
         }
         // Permitir que fechaProximoMantenimiento sea null si se envía explícitamente null
-        mantenimiento.fechaVencimiento = fechaVencimiento !== undefined ? fechaVencimiento : mantenimiento.fechaVencimiento;
+        mantenimiento.fechaVencimiento = fechaVencimiento !== undefined ? fechaProximoMantenimiento : mantenimiento.fechaProximoMantenimiento;
 
         await mantenimiento.save();
 
