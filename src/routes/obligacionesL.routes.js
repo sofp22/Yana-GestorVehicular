@@ -1,8 +1,7 @@
-
 import { Router } from 'express';
 import { verifyToken } from '../middleware/authJwt.js';
-import { uploadObligacionesDocumento } from '../controllers/obligacionesLController.js'; // Importa Multer middleware
-// --- CAMBIO CLAVE AQUÍ: Importar las funciones específicas con named exports ---
+import { uploadObligacionesL } from '../middleware/upload.js'; // <-- Importa de 'upload.js'
+// --- Importa las funciones específicas con named exports ---
 import {
     createObligacionL,
     getObligacionLById,
@@ -14,10 +13,11 @@ import {
 const router = Router();
 
 // Rutas para Obligaciones Legales
-router.post('/', verifyToken, uploadObligacionesDocumento.single('documento'), createObligacionL);
+// Usa 'uploadObligacionesL' y el campo es 'archivo'
+router.post('/', verifyToken, uploadObligacionesL, createObligacionL);
 router.get('/:id', verifyToken, getObligacionLById);
 router.get('/', verifyToken, getAllObligacionesL);
-router.put('/:id', verifyToken, uploadObligacionesDocumento.single('documento'), updateObligacionL); // Permite actualizar el documento
+router.put('/:id', verifyToken, uploadObligacionesL, updateObligacionL); // Permite actualizar el documento
 router.delete('/:id', verifyToken, deleteObligacionL);
 
 export default router;

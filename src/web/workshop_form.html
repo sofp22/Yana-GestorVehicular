@@ -1,171 +1,696 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Registro de Mantenimiento (Taller)</title>
-  <!-- Roboto y Material Icons -->
-  <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
-  <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
-  <style>
-    body {
-      font-family: 'Roboto', sans-serif;
-      margin: 0; padding: 20px;
-      background-color: #e0f2f7;
-      display: flex; justify-content: center; align-items: center;
-      min-height: 100vh; color: #37474f;
-    }
-    .container {
-      max-width: 600px; width: 100%;
-      padding: 30px; background: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-      box-sizing: border-box;
-    }
-    h1 {
-      text-align: center;
-      color: #1976d2;
-      margin-bottom: 20px;
-      font-weight: 500;
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px;
-    }
-    p {
-      text-align: center;
-      margin-bottom: 30px;
-      color: #546e7a;
-    }
-    .form-group {
-      margin-bottom: 20px;
-    }
-    label {
-      display: flex; align-items: center; gap: 5px;
-      margin-bottom: 8px; font-weight: 500; color: #37474f;
-    }
-    label .material-icons {
-      font-size: 18px;
-    }
-    input[type="text"],
-    input[type="number"],
-    input[type="date"],
-    textarea {
-      width: 100%; padding: 12px;
-      border: 1px solid #bbdefb;
-      border-radius: 4px; font-size: 16px;
-      box-sizing: border-box;
-      transition: border-color .3s, box-shadow .3s;
-    }
-    input[type="file"] {
-      width: 100%; padding: 8px 0;
-      font-size: 16px; box-sizing: border-box;
-    }
-    input:focus, textarea:focus {
-      outline: none;
-      border-color: #2196f3;
-      box-shadow: 0 0 0 3px rgba(33,150,243,0.3);
-    }
-    input[type="submit"],
-    button {
-      display: block; width: 100%;
-      padding: 14px 0; margin-top: 10px;
-      background-color: #2196f3; color: #fff;
-      border: none; border-radius: 4px;
-      font-size: 18px; font-weight: 500;
-      cursor: pointer;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
-      transition: background-color .3s, box-shadow .3s;
-    }
-    button:hover,
-    input[type="submit"]:hover {
-      background-color: #1976d2;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.3);
-    }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Registro de Mantenimiento (Taller)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <style>
+        :root {
+            --primary-color: #1976d2;
+            --primary-dark: #1565c0;
+            --primary-light: #42a5f5;
+            --accent-color: #03dac6;
+            --background-color: #fafafa;
+            --surface-color: #ffffff;
+            --error-color: #f44336;
+            --success-color: #4caf50;
+            --text-primary: #212121;
+            --text-secondary: #757575;
+            --divider-color: #e0e0e0;
+            --shadow-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+            --shadow-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 600px;
+            width: 100%;
+            background: var(--surface-color);
+            border-radius: 16px;
+            box-shadow: var(--shadow-3);
+            overflow: hidden;
+            animation: slideUp 0.6s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .header {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            padding: 32px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header .material-icons {
+            font-size: 32px;
+        }
+
+        .header p {
+            margin: 8px 0 0 0;
+            opacity: 0.9;
+            font-size: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-container {
+            padding: 32px;
+        }
+
+        .form-group {
+            position: relative;
+            margin-bottom: 32px;
+        }
+
+        .input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            color: var(--text-secondary);
+            font-size: 20px;
+            z-index: 2;
+            transition: color 0.15s ease;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 20px 16px 8px 48px;
+            border: 2px solid var(--divider-color);
+            border-radius: 8px;
+            font-size: 16px;
+            background: transparent;
+            transition: all 0.15s ease;
+            outline: none;
+        }
+
+        .form-input:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        .form-input:focus + .input-icon {
+            color: var(--primary-color);
+        }
+
+        .form-label {
+            position: absolute;
+            left: 48px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            pointer-events: none;
+            transition: all 0.15s ease;
+            background: var(--surface-color);
+            padding: 0 4px;
+        }
+
+        .form-input:focus + .input-icon + .form-label,
+        .form-input:not(:placeholder-shown) + .input-icon + .form-label {
+            top: 0;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(244, 67, 54, 0.1);
+        }
+
+        .form-input.success {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 3px rgba(76, 175, 80, 0.1);
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: all 0.15s ease;
+        }
+
+        .error-message.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .textarea-container {
+            position: relative;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 20px 16px 8px 48px;
+            border: 2px solid var(--divider-color);
+            border-radius: 8px;
+            font-size: 16px;
+            font-family: 'Roboto', sans-serif;
+            background: transparent;
+            transition: all 0.15s ease;
+            outline: none;
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .form-textarea:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(25, 118, 210, 0.1);
+        }
+
+        .form-textarea:focus + .input-icon {
+            color: var(--primary-color);
+        }
+
+        .textarea-container .form-label {
+            position: absolute;
+            left: 48px;
+            top: 28px;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+            font-size: 16px;
+            pointer-events: none;
+            transition: all 0.15s ease;
+            background: var(--surface-color);
+            padding: 0 4px;
+        }
+
+        .form-textarea:focus + .input-icon + .form-label,
+        .form-textarea:not(:placeholder-shown) + .input-icon + .form-label {
+            top: 0;
+            font-size: 12px;
+            color: var(--primary-color);
+            font-weight: 500;
+        }
+
+        .file-input-container {
+            position: relative;
+            border: 2px dashed var(--divider-color);
+            border-radius: 8px;
+            padding: 24px;
+            text-align: center;
+            transition: all 0.15s ease;
+            cursor: pointer;
+        }
+
+        .file-input-container:hover {
+            border-color: var(--primary-color);
+            background: rgba(25, 118, 210, 0.05);
+        }
+
+        .file-input-container.dragover {
+            border-color: var(--primary-color);
+            background: rgba(25, 118, 210, 0.1);
+        }
+
+        .file-input {
+            position: absolute;
+            opacity: 0;
+            width: 100%;
+            height: 100%;
+            cursor: pointer;
+        }
+
+        .file-input-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-secondary);
+            font-size: 14px;
+        }
+
+        .file-input-label .material-icons {
+            font-size: 48px;
+            color: var(--primary-color);
+        }
+
+        .submit-button {
+            width: 100%;
+            padding: 16px;
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+            box-shadow: var(--shadow-1);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .submit-button:hover {
+            box-shadow: var(--shadow-2);
+            transform: translateY(-1px);
+        }
+
+        .submit-button:active {
+            transform: translateY(0);
+        }
+
+        .submit-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .loading-spinner {
+            display: none;
+            width: 20px;
+            height: 20px;
+            border: 2px solid transparent;
+            border-top: 2px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-right: 8px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .submit-button.loading .loading-spinner {
+            display: inline-block;
+        }
+
+        .submit-button.loading .button-text {
+            opacity: 0.7;
+        }
+
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                border-radius: 12px;
+            }
+            
+            .header {
+                padding: 24px;
+            }
+            
+            .form-container {
+                padding: 24px;
+            }
+            
+            .form-group {
+                margin-bottom: 24px;
+            }
+        }
+
+        .success-message {
+            background: var(--success-color);
+            color: white;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 24px;
+            display: none;
+            align-items: center;
+            gap: 8px;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .progress-bar {
+            height: 4px;
+            background: var(--divider-color);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 24px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--accent-color));
+            width: 0%;
+            transition: width 0.3s ease;
+            border-radius: 2px;
+        }
+    </style>
 </head>
 <body>
-  <div class="container">
-    <h1>
-      <span class="material-icons">build</span>
-      Registro de Mantenimiento
-    </h1>
-    <p>Por favor, complete los detalles del mantenimiento.</p>
+    <div class="container">
+        <div class="header">
+            <h1>
+                <span class="material-icons">build</span>
+                Registro de Mantenimiento
+            </h1>
+            <p>Complete los detalles del mantenimiento realizado</p>
+        </div>
 
-    <form action="/api/mantenimientos/workshop-submit?token={{TOKEN}}"
-          method="POST" enctype="multipart/form-data">
-      
-      <div class="form-group">
-        <label for="nitOCedulaTaller">
-          <span class="material-icons">business</span>
-          NIT o Cédula del Taller:
-        </label>
-        <input type="text" id="nitOCedulaTaller" name="nitOCedulaTaller"
-               placeholder="Ej: 900123456-7 o 123456789" required>
-      </div>
+        <div class="form-container">
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
 
-      <div class="form-group">
-        <label for="tipo">
-          <span class="material-icons">category</span>
-          Tipo de Mantenimiento:
-        </label>
-        <input type="text" id="tipo" name="tipo"
-               placeholder="Ej: Cambio de aceite, Reparación de frenos" required>
-      </div>
+            <div class="success-message" id="successMessage">
+                <span class="material-icons">check_circle</span>
+                <span>Formulario enviado correctamente</span>
+            </div>
 
-      <div class="form-group">
-        <label for="fecha">
-          <span class="material-icons">event</span>
-          Fecha del Mantenimiento:
-        </label>
-        <input type="date" id="fecha" name="fecha" required>
-      </div>
+            <form id="maintenanceForm" action="/api/mantenimientos/workshop-submit" method="POST" enctype="multipart/form-data">
+                
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="text" id="nitOCedulaTaller" name="nitOCedulaTaller" class="form-input" placeholder=" " required>
+                        <span class="input-icon material-icons">business</span>
+                        <label for="nitOCedulaTaller" class="form-label">NIT o Cédula del Taller</label>
+                    </div>
+                    <div class="error-message" id="nitError">Por favor ingrese un NIT o cédula válido</div>
+                </div>
 
-      <div class="form-group">
-        <label for="kilometraje">
-          <span class="material-icons">speed</span>
-          Kilometraje Actual:
-        </label>
-        <input type="number" id="kilometraje" name="kilometraje"
-               placeholder="Ej: 50000" required>
-      </div>
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="text" id="tipo" name="tipo" class="form-input" placeholder=" " required>
+                        <span class="input-icon material-icons">category</span>
+                        <label for="tipo" class="form-label">Tipo de Mantenimiento</label>
+                    </div>
+                    <div class="error-message" id="tipoError">Este campo es obligatorio</div>
+                </div>
 
-      <div class="form-group">
-        <label for="descripcion">
-          <span class="material-icons">description</span>
-          Descripción (opcional):
-        </label>
-        <textarea id="descripcion" name="descripcion" rows="4"
-                  placeholder="Detalles del trabajo realizado..."></textarea>
-      </div>
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="date" id="fecha" name="fecha" class="form-input" placeholder=" " required>
+                        <span class="input-icon material-icons">event</span>
+                        <label for="fecha" class="form-label">Fecha del Mantenimiento</label>
+                    </div>
+                    <div class="error-message" id="fechaError">Seleccione una fecha válida</div>
+                </div>
 
-      <div class="form-group">
-        <label for="costo">
-          <span class="material-icons">attach_money</span>
-          Costo Total ($):
-        </label>
-        <input type="number" id="costo" name="costo" step="0.01"
-               placeholder="Ej: 150.00" required>
-      </div>
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="number" id="kilometraje" name="kilometraje" class="form-input" placeholder=" " required min="0">
+                        <span class="input-icon material-icons">speed</span>
+                        <label for="kilometraje" class="form-label">Kilometraje Actual</label>
+                    </div>
+                    <div class="error-message" id="kilometrajeError">Ingrese un kilometraje válido</div>
+                </div>
 
-      <div class="form-group">
-        <label for="fechaProximoMantenimiento">
-          <span class="material-icons">calendar_today</span>
-          Fecha Próximo Mantenimiento (opcional):
-        </label>
-        <input type="date" id="fechaProximoMantenimiento"
-               name="fechaProximoMantenimiento">
-      </div>
+                <div class="form-group">
+                    <div class="textarea-container">
+                        <textarea id="descripcion" name="descripcion" class="form-textarea" placeholder=" " rows="4"></textarea>
+                        <span class="input-icon material-icons">description</span>
+                        <label for="descripcion" class="form-label">Descripción (opcional)</label>
+                    </div>
+                </div>
 
-      <div class="form-group">
-        <label for="factura">
-          <span class="material-icons">attach_file</span>
-          Adjuntar Factura/Documento:
-        </label>
-        <input type="file" id="factura" name="factura"
-               accept=".pdf,.jpg,.jpeg,.png">
-      </div>
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="number" id="costo" name="costo" class="form-input" placeholder=" " step="0.01" required min="0">
+                        <span class="input-icon material-icons">attach_money</span>
+                        <label for="costo" class="form-label">Costo Total ($)</label>
+                    </div>
+                    <div class="error-message" id="costoError">Ingrese un costo válido</div>
+                </div>
 
-      <button type="submit">Registrar Mantenimiento</button>
-    </form>
-  </div>
+                <div class="form-group">
+                    <div class="input-container">
+                        <input type="date" id="fechaProximoMantenimiento" name="fechaProximoMantenimiento" class="form-input" placeholder=" ">
+                        <span class="input-icon material-icons">calendar_today</span>
+                        <label for="fechaProximoMantenimiento" class="form-label">Fecha Próximo Mantenimiento</label>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <div class="file-input-container" id="fileContainer">
+                        <input type="file" id="factura" name="factura" class="file-input" accept=".pdf,.jpg,.jpeg,.png">
+                        <div class="file-input-label">
+                            <span class="material-icons">cloud_upload</span>
+                            <span>Arrastra tu archivo aquí o haz clic para seleccionar</span>
+                            <small>PDF, JPG, JPEG, PNG (Máx. 10MB)</small>
+                        </div>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-button" id="submitButton">
+                    <div class="loading-spinner"></div>
+                    <span class="button-text">Registrar Mantenimiento</span>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        const form = document.getElementById('maintenanceForm');
+        const inputs = form.querySelectorAll('.form-input, .form-textarea');
+        const submitButton = document.getElementById('submitButton');
+        const progressFill = document.getElementById('progressFill');
+        const successMessage = document.getElementById('successMessage');
+
+        // Función para validar campos (mantengo la tuya)
+        function validateField(field) {
+            const value = field.value.trim();
+            const fieldName = field.name;
+            let isValid = true;
+            let errorMessage = '';
+
+            switch (fieldName) {
+                case 'nitOCedulaTaller':
+                    isValid = value.length >= 8;
+                    errorMessage = 'NIT o cédula debe tener al menos 8 caracteres';
+                    break;
+                case 'tipo':
+                    isValid = value.length >= 3;
+                    errorMessage = 'Tipo de mantenimiento debe tener al menos 3 caracteres';
+                    break;
+                case 'fecha':
+                    const selectedDate = new Date(value);
+                    const today = new Date();
+                    isValid = selectedDate <= today;
+                    errorMessage = 'La fecha no puede ser futura';
+                    break;
+                case 'kilometraje':
+                    isValid = value > 0;
+                    errorMessage = 'El kilometraje debe ser mayor a 0';
+                    break;
+                case 'costo':
+                    isValid = parseFloat(value) > 0;
+                    errorMessage = 'El costo debe ser mayor a 0';
+                    break;
+            }
+
+            const errorElement = document.getElementById(fieldName + 'Error');
+            if (errorElement) {
+                if (!isValid && field.required) {
+                    field.classList.add('error');
+                    field.classList.remove('success');
+                    errorElement.textContent = errorMessage;
+                    errorElement.classList.add('show');
+                } else if (value && field.required) {
+                    field.classList.remove('error');
+                    field.classList.add('success');
+                    errorElement.classList.remove('show');
+                } else {
+                    field.classList.remove('error', 'success');
+                    errorElement.classList.remove('show');
+                }
+            }
+
+            return isValid || !field.required;
+        }
+
+        inputs.forEach(input => {
+            input.addEventListener('blur', () => validateField(input));
+            input.addEventListener('input', () => {
+                if (input.classList.contains('error')) {
+                    validateField(input);
+                }
+                updateProgress();
+            });
+        });
+
+        function updateProgress() {
+            const requiredFields = form.querySelectorAll('[required]');
+            let filledFields = 0;
+
+            requiredFields.forEach(field => {
+                if (field.value.trim() !== '') {
+                    filledFields++;
+                }
+            });
+
+            const progress = (filledFields / requiredFields.length) * 100;
+            progressFill.style.width = progress + '%';
+        }
+
+        const fileContainer = document.getElementById('fileContainer');
+        const fileInput = document.getElementById('factura');
+
+        fileContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            fileContainer.classList.add('dragover');
+        });
+
+        fileContainer.addEventListener('dragleave', () => {
+            fileContainer.classList.remove('dragover');
+        });
+
+        fileContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            fileContainer.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                fileInput.files = files;
+                updateFileLabel(files[0]);
+            }
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length > 0) {
+                updateFileLabel(e.target.files[0]);
+            }
+        });
+
+        function updateFileLabel(file) {
+            const label = fileContainer.querySelector('.file-input-label');
+            if (file) {
+                label.innerHTML = `
+                    <span class="material-icons">description</span>
+                    <span>${file.name}</span>
+                    <small>${(file.size / 1024 / 1024).toFixed(2)} MB</small>
+                `;
+            } else {
+                initializeFileLabel();
+            }
+        }
+
+        // Tu lógica de envío del formulario (mantenida intacta)
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            let isFormValid = true;
+            inputs.forEach(input => {
+                if (!validateField(input)) {
+                    isFormValid = false;
+                }
+            });
+
+            if (isFormValid) {
+                submitButton.classList.add('loading');
+                submitButton.disabled = true;
+
+                const urlParams = new URLSearchParams(window.location.search);
+                const token = urlParams.get('token');
+                
+                const formData = new FormData(form);
+
+                const apiUrl = `/api/mantenimientos/workshop-submit${token ? `?token=${token}` : ''}`;
+
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.message || 'Error al registrar el mantenimiento.');
+                    }
+
+                    const result = await response.json();
+                    console.log('Mantenimiento registrado con éxito:', result);
+
+                    successMessage.style.display = 'flex';
+                    form.reset();
+                    updateProgress();
+                    fileInput.files = null;
+                    updateFileLabel(null);
+
+                    setTimeout(() => {
+                        successMessage.style.display = 'none';
+                    }, 3000);
+
+                } catch (error) {
+                    console.error('Error al enviar el formulario:', error.message);
+                    alert('Error al registrar mantenimiento: ' + error.message); 
+                } finally {
+                    submitButton.classList.remove('loading');
+                    submitButton.disabled = false;
+                }
+            }
+        });
+
+        function initializeFileLabel() {
+            const label = fileContainer.querySelector('.file-input-label');
+            label.innerHTML = `
+                <span class="material-icons">cloud_upload</span>
+                <span>Arrastra tu archivo aquí o haz clic para seleccionar</span>
+                <small>PDF, JPG, JPEG, PNG (Máx. 10MB)</small>
+            `;
+        }
+
+        // Inicializar al cargar la página
+        updateProgress();
+        initializeFileLabel();
+
+        inputs.forEach((input, index) => {
+            input.style.animationDelay = `${index * 0.1}s`;
+            input.style.animation = 'slideUp 0.6s ease-out forwards';
+        });
+    </script>
 </body>
 </html>
