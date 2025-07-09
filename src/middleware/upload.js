@@ -23,6 +23,7 @@ export const uploadMantenimientoFactura = multer({
     storage: storageMantenimientoFactura,
     limits: { fileSize: 5 * 1024 * 1024 }, // Límite de 5MB
     fileFilter: (req, file, cb) => {
+        console.log('Mantenimiento Factura - MIME Type recibido:', file.mimetype); // <--- ADD THIS LINE
         if (file.mimetype === 'application/pdf' || file.mimetype.startsWith('image/')) {
             cb(null, true);
         } else {
